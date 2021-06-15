@@ -100,7 +100,7 @@
 	if(markings_icon && markings_color)
 		add_overlay(mutable_appearance(icon, "[get_world_inventory_state()][markings_icon]", markings_color))
 	for(var/obj/item/clothing/accessory/accessory in accessories)
-		var/image/I = accessory.get_attached_inventory_overlay()
+		var/image/I = accessory.get_mob_overlay(null,slot_tie_str)
 		if(I)
 			add_overlay(I)
 
