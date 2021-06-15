@@ -1,6 +1,6 @@
-#define SPECIES_AVIAN            "Neo-Avian"
+#define SPECIES_AVIAN            "Teshari"
 #define BODYTYPE_AVIAN           "avian body"
-#define IS_AVIAN                 "avian"
+#define IS_AVIAN                 "teshari"
 
 /decl/modpack/neoavians
 	name = "Neo-Avian Content"
