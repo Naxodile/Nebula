@@ -265,12 +265,18 @@
 	icon_state = "sheet-mythril"
 
 /obj/item/stack/material/reinforced
+	name = "sheets"
+	singular_name = "sheet"
+	plural_name = "sheets"
 	icon_state = "sheet-reinf"
 	item_state = "sheet-metal"
 	plural_icon_state = "sheet-reinf-mult"
 	max_icon_state = "sheet-reinf-max"
 
 /obj/item/stack/material/shiny
+	name = "sheets"
+	singular_name = "sheet"
+	plural_name = "sheets"
 	icon_state = "sheet-sheen"
 	item_state = "sheet-shiny"
 	plural_icon_state = "sheet-sheen-mult"
