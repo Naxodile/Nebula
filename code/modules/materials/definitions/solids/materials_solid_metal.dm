@@ -8,6 +8,7 @@
 	hardness = MAT_VALUE_RIGID
 	wall_support_value = MAT_VALUE_HEAVY
 	default_solid_form = /obj/item/stack/material/ingot
+	table_icon_base = "metal"
 
 /decl/material/solid/metal/uranium
 	name = "uranium"
