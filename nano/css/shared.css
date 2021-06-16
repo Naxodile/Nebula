@@ -2,9 +2,9 @@ body {
     padding: 0;
     margin: 0;
     font-size: 12px;
-    color: #00ff00;
+    color: #ffffff;
     line-height: 170%;
-    font-family: fixedsys;
+    font-family: Verdana, Geneva, sans-serif;
     background: #272727;
 }
 
@@ -37,8 +37,8 @@ hr {
     text-align: center;
     color: #ffffff;
     text-decoration: none;
-    background: #003300;
-    border: 1px solid #00ff00;
+    background: #40628a;
+    border: 1px solid #161616;
     padding: 0px 4px 4px 4px;
     margin: 0 2px 2px 0;
     cursor: default;
@@ -54,12 +54,12 @@ hr {
 }
 
 a:hover, .zoomLink:hover, .linkActive:hover {
-    background: #003300;
+    background: #507aac;
 }
 
 .linkPending, .linkPending:hover {
     color: #ffffff;
-    background: #003300;
+    background: #507aac;
 }
 
 a.white, a.white:link, a.white:visited, a.white:active {
@@ -158,12 +158,10 @@ abbr {
 
 .white {
     color: white;
-    font-weight: bold;
 }
 
 .good {
-    color: white;
-    font-weight: bold;
+    color: #4f7529;
 }
 
 .mild {
@@ -172,18 +170,15 @@ abbr {
 }
 
 .average {
-    color: #00ff00;
-    font-weight: bold;
+    color: #cd6500;
 }
 
 .bad {
     color: #ee0000;
-    font-weight: bold;
 }
 
 .idle {
     color: #272727;
-    font-weight: bold;
 }
 
 .redButton {
@@ -219,6 +214,7 @@ abbr {
 .noticePlaceholder {
     position: relative;
     font-size: 12px;
+    font-style: italic;
     font-weight: bold;
     padding: 3px 4px 3px 4px;
     margin: 4px 0 4px 0;
@@ -229,6 +225,7 @@ abbr {
     background: url(uiNoticeBackground.jpg) 50% 50%;
     color: #000000;
     font-size: 12px;
+    font-style: italic;
     font-weight: bold;
     padding: 3px 4px 3px 4px;
     margin: 4px 0 4px 0;
@@ -282,7 +279,7 @@ div.notice {
 
 .itemLabelNarrow, .itemLabel, .itemLabelWide, .itemLabelWider, .itemLabelWidest {
     float: left;
-    color: #00ff00;
+    color: #e9c183;
 }
 
 .itemLabelNarrow {
