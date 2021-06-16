@@ -51,6 +51,8 @@
 	accept_drinking = 1
 	core_skill = SKILL_COOKING
 	can_contaminate = FALSE //It's not a complex panel, and I'm fairly sure that most people don't haymaker the control panel on a soft drinks machine. -- Chaoko99
+	beaker_offset = -2
+	beaker_positions = list(-1,3,7,11,15)
 
 /obj/machinery/chemical_dispenser/bar_soft/full
 	spawn_cartridges = list(
@@ -84,6 +86,8 @@
 	accept_drinking = 1
 	core_skill = SKILL_COOKING
 	can_contaminate = FALSE //See above.
+	beaker_offset = -2
+	beaker_positions = list(-3,2,7,12,17)
 
 /obj/machinery/chemical_dispenser/bar_alc/full
 	spawn_cartridges = list(
@@ -115,6 +119,8 @@
 	accept_drinking = 1
 	core_skill = SKILL_COOKING
 	can_contaminate = FALSE //See above.
+	beaker_offset = -2
+	beaker_positions = list(0,14)
 
 /obj/machinery/chemical_dispenser/bar_coffee/full
 	spawn_cartridges = list(
