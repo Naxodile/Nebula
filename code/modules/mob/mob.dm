@@ -1027,3 +1027,13 @@
 
 /mob/proc/get_bodytype()
 	return
+
+/mob/verb/toggle_help_info()
+	set name = "Toggle Examine Help"
+	set desc = "Sets whether codex information is shown in examine text."
+	set category = "IC"
+	inquisitive_examine = !inquisitive_examine
+	if(inquisitive_examine)
+		to_chat(src, SPAN_NOTICE("You will now see additional information on examine.</span>"))
+	else
+		to_chat(src, SPAN_NOTICE("You will no longer see additional information on examine.</span>"))
