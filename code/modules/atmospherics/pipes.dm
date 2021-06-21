@@ -25,6 +25,7 @@
 	frame_type = /obj/item/pipe
 	uncreated_component_parts = null // No apc connection
 	construct_state = /decl/machine_construction/pipe
+	matter = list()
 
 /obj/machinery/atmospherics/pipe/drain_power()
 	return -1
