@@ -1034,6 +1034,6 @@
 	set category = "IC"
 	inquisitive_examine = !inquisitive_examine
 	if(inquisitive_examine)
-		to_chat(src, SPAN_NOTICE("You will now see additional information on examine.</span>"))
+		to_chat(src, SPAN_NOTICE("You will now see additional information on examine."))
 	else
-		to_chat(src, SPAN_NOTICE("You will no longer see additional information on examine.</span>"))
+		to_chat(src, SPAN_NOTICE("You will no longer see additional information on examine."))
