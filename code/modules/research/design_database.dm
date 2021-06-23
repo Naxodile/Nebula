@@ -13,7 +13,7 @@
 		TECH_EXOTIC_MATTER = 0,
 		TECH_POWER =         1,
 		TECH_WORMHOLES =     0,
-		TECH_BIO =           0,
+		TECH_BIO =           1,
 		TECH_COMBAT =        0,
 		TECH_MAGNET =        1,
 		TECH_DATA =          1,
