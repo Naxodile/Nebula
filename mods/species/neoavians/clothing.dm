@@ -1,10 +1,12 @@
-/obj/item/clothing/gloves/Initialize()
-	. = ..()
-	LAZYSET(sprite_sheets, BODYTYPE_AVIAN, 'mods/species/neoavians/icons/clothing/gloves.dmi')
+#define AVIAN_SPRITE(CLOTHING_PATH, SPRITE_SHEET)                                                      \
+/obj/item/clothing/##CLOTHING_PATH/Initialize() {                                                       \
+	. = ..();                                                                                            \
+	LAZYSET(sprite_sheets, BODYTYPE_AVIAN, file("mods/species/neoavians/icons/clothing/"+##SPRITE_SHEET));\
+}
 
-/obj/item/clothing/accessory/cloak/Initialize()
-	. = ..()
-	LAZYSET(sprite_sheets, BODYTYPE_AVIAN, 'mods/species/neoavians/icons/clothing/cloak.dmi')
+AVIAN_SPRITE(gloves,"gloves.dmi")
+
+AVIAN_SPRITE(accessory/cloak,"cloak.dmi")
 
 /obj/item/clothing/under/avian_smock
 	name = "smock"
