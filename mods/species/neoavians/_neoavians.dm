@@ -12,3 +12,7 @@
 /decl/prosthetics_manufacturer/New()
 	..()
 	LAZYDISTINCTADD(bodytypes_cannot_use, BODYTYPE_AVIAN)
+
+/obj/machinery/suit_cycler/Initialize(mapload, d, populate_parts)
+	. = ..()
+	available_bodytypes |= BODYTYPE_AVIAN

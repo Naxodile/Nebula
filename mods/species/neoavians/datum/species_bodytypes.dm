@@ -4,7 +4,6 @@
 	icon_base =         'mods/species/neoavians/icons/body.dmi'
 	damage_overlays =   'mods/species/neoavians/icons/dam_avian.dmi'
 	blood_mask =        'mods/species/neoavians/icons/blood_avian.dmi'
-	limb_blend =        ICON_MULTIPLY
 	health_hud_intensity = 3
 
 /decl/bodytype/avian/Initialize()
