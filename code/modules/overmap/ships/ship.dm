@@ -24,6 +24,8 @@ var/global/const/OVERMAP_SPEED_CONSTANT = (1 SECOND)
 	var/vessel_size = SHIP_SIZE_LARGE	// arbitrary number, affects how likely are we to evade meteors
 
 
+	var/list/navigation_viewers // list of weakrefs to people viewing the overmap via this ship
+
 /obj/effect/overmap/visitable/ship/Initialize()
 	. = ..()
 	min_speed = round(min_speed, SHIP_MOVE_RESOLUTION)
@@ -62,8 +64,17 @@ var/global/const/OVERMAP_SPEED_CONSTANT = (1 SECOND)
 
 
 /obj/effect/overmap/visitable/ship/relaymove(mob/user, direction, accel_limit)
-	operator_skill = user.get_skill_value(SKILL_PILOT)
+	update_operator_skill(user)
 	accelerate(direction, accel_limit)
+
+/**
+ * Updates `operator_skill` to match the current user's skill level, or to null if no user is provided.
+ * Will skip observers to avoid allowing unintended external influences on flight.
+ */
+/obj/effect/overmap/visitable/ship/proc/update_operator_skill(mob/user)
+	if (isobserver(user))
+		return
+	operator_skill = user?.get_skill_value(SKILL_PILOT)
 
 /obj/effect/overmap/visitable/ship/get_scan_data(mob/user)
 	. = ..()
@@ -138,7 +149,7 @@ var/global/const/OVERMAP_SPEED_CONSTANT = (1 SECOND)
 	for(var/i = 1 to 2)
 		if(MOVING(speed[i], min_speed))
 			. = min(., ((speed[i] > 0 ? 1 : -1) - position[i]) / speed[i])
-	. = max(ceil(.),0)
+	. = max(CEILING(.),0)
 
 /obj/effect/overmap/visitable/ship/proc/halt()
 	adjust_speed(-speed[1], -speed[2])

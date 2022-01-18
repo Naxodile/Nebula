@@ -104,7 +104,7 @@
 /obj/machinery/computer/HolodeckControl/Topic(href, href_list)
 	if(..())
 		return 1
-	if((usr.contents.Find(src) || (in_range(src, usr) && istype(src.loc, /turf))) || (istype(usr, /mob/living/silicon)))
+	if((usr.contents.Find(src) || (in_range(src, usr) && isturf(src.loc))) || (istype(usr, /mob/living/silicon)))
 		usr.set_machine(src)
 
 		if(href_list["program"])
@@ -290,7 +290,7 @@
 	linkedholodeck.sound_env = A.sound_env
 
 	spawn(30)
-		for(var/obj/effect/landmark/L in linkedholodeck)
+		for(var/obj/abstract/landmark/L in linkedholodeck)
 			if(L.name=="Atmospheric Test Start")
 				spawn(20)
 					var/turf/T = get_turf(L)

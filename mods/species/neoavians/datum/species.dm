@@ -19,13 +19,22 @@
 	Extremely fragile, agile, and adept at hunting in packs, they have managed to gain a reputation as capable against the odds."
 
 	age_descriptor = /datum/appearance_descriptor/age/neoavian
+	holder_icon = 'mods/species/neoavians/icons/holder.dmi'
 
-	meat_type = /obj/item/chems/food/snacks/meat/chicken
+	meat_type = /obj/item/chems/food/meat/chicken
 
-	base_color = "#000616"
+	base_color = "#252525"
+	base_eye_color = "#f5c842"
+	base_markings = list(/decl/sprite_accessory/marking/avian = "#454545")
+
 	reagent_tag = IS_AVIAN
 
-	available_bodytypes = list(/decl/bodytype/avian)
+	available_bodytypes = list(
+		/decl/bodytype/avian,
+		/decl/bodytype/avian/additive,
+		/decl/bodytype/avian/raptor,
+		/decl/bodytype/avian/additive/raptor
+	)
 
 	total_health = 150
 	brute_mod = 1.25
@@ -34,7 +43,7 @@
 	holder_type = /obj/item/holder
 	gluttonous = GLUT_TINY
 	blood_volume = 400
-	hunger_factor = 0.1
+	hunger_factor = DEFAULT_HUNGER_FACTOR * 1.6
 
 	spawn_flags = SPECIES_CAN_JOIN
 	appearance_flags = HAS_HAIR_COLOR | HAS_SKIN_COLOR | HAS_EYE_COLOR
@@ -48,6 +57,7 @@
 		)
 
 	has_organ = list(
+		BP_STOMACH =  /obj/item/organ/internal/stomach,
 		BP_HEART =    /obj/item/organ/internal/heart,
 		BP_LUNGS =    /obj/item/organ/internal/lungs,
 		BP_LIVER =    /obj/item/organ/internal/liver,
@@ -55,6 +65,8 @@
 		BP_BRAIN =    /obj/item/organ/internal/brain,
 		BP_EYES =     /obj/item/organ/internal/eyes/avian
 	)
+
+	override_limb_types = list(BP_TAIL = /obj/item/organ/external/tail/avian)
 
 	unarmed_attacks = list(
 		/decl/natural_attack/bite/sharp,
@@ -73,12 +85,15 @@
 /decl/species/neoavian/equip_default_fallback_uniform(var/mob/living/carbon/human/H)
 	if(istype(H))
 		H.equip_to_slot_or_del(new /obj/item/clothing/under/avian_smock/worker, slot_w_uniform_str)
+		H.equip_to_slot_or_del(new /obj/item/clothing/shoes/avian, slot_shoes_str)
 
 /decl/species/neoavian/handle_post_species_pref_set(var/datum/preferences/pref)
 	pref.body_markings = pref.body_markings || list()
 	if(!pref.body_markings["Tailfeathers (Groin)"])
 		pref.body_markings["Tailfeathers (Groin)"] = "#252525"
 	pref.skin_colour = "#252525"
+/decl/species/neoavian/get_holder_color(var/mob/living/carbon/human/H)
+	return H.skin_colour
 
 /obj/item/organ/internal/eyes/avian
 	eye_icon = 'mods/species/neoavians/icons/eyes.dmi'

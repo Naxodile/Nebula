@@ -1,4 +1,4 @@
-
+var/global/list/all_apcs = list()
 
 // The Area Power Controller (APC)
 // Controls and provides power to most electronics in an area
@@ -99,7 +99,7 @@
 	initial_access = list(access_engine_equip)
 	clicksound = "switch"
 	layer = ABOVE_WINDOW_LAYER
-	var/needs_powerdown_sound
+	var/powered_down = FALSE
 	var/area/area
 	var/areastring = null
 	var/shorted = 0
@@ -173,6 +173,7 @@
 	return amount - use_power_oneoff(amount, LOCAL)
 
 /obj/machinery/power/apc/Initialize(mapload, var/ndir, var/populate_parts = TRUE)
+	global.all_apcs += src
 	if(areastring)
 		area = get_area_name(areastring)
 	else
@@ -200,6 +201,7 @@
 	power_change()
 
 /obj/machinery/power/apc/Destroy()
+	global.all_apcs -= src
 	if(area)
 		update()
 		area.apc = null
@@ -224,8 +226,9 @@
 /obj/machinery/power/apc/proc/energy_fail(var/duration)
 	if(emp_hardened)
 		return
+	if(!failure_timer && duration)
+		playsound(src, 'sound/machines/apc_nopower.ogg', 75, 0)
 	failure_timer = max(failure_timer, round(duration))
-	playsound(src, 'sound/machines/apc_nopower.ogg', 75, 0)
 
 /obj/machinery/power/apc/proc/init_round_start()
 	var/obj/item/stock_parts/power/terminal/term = get_component_of_type(/obj/item/stock_parts/power/terminal)
@@ -286,18 +289,19 @@
 			channel++
 
 	if(update_state < 0)
-		pixel_x = 0
-		pixel_y = 0
+		default_pixel_x = 0
+		default_pixel_y = 0
 		var/turf/T = get_step(get_turf(src), dir)
 		if(istype(T) && T.density)
 			if(dir == SOUTH)
-				pixel_y = -22
+				default_pixel_y = -22
 			else if(dir == NORTH)
-				pixel_y = 22
+				default_pixel_y = 22
 			else if(dir == EAST)
-				pixel_x = 22
+				default_pixel_x = 22
 			else if(dir == WEST)
-				pixel_x = -22
+				default_pixel_x = -22
+		reset_offsets()
 
 	var/update = check_updates() 		//returns 0 if no need to update icons.
 						// 1 if we need to update the icon_state
@@ -455,7 +459,7 @@
 				cover_removed = TRUE
 				user.visible_message("<span class='danger'>The APC cover was knocked down with the [W.name] by [user.name]!</span>", \
 					"<span class='danger'>You knock down the APC cover with your [W.name]!</span>", \
-					"You hear a bang")
+					"You hear a bang.")
 			return TRUE
 	return ..()
 
@@ -574,7 +578,7 @@
 	if (!ui)
 		// the ui does not exist, so we'll create a new() one
 		// for a list of parameters and their descriptions see the code docs in \code\modules\nano\nanoui.dm
-		ui = new(user, src, ui_key, "apc.tmpl", "[area.name] - APC", 520, data["siliconUser"] ? 465 : 440)
+		ui = new(user, src, ui_key, "apc.tmpl", "[area? area.name : "ERROR"] - APC", 520, data["siliconUser"] ? 465 : 440)
 		// when the ui is first opened this is the data it will use
 		ui.set_initial_data(data)
 		// open the new ui window
@@ -587,30 +591,34 @@
 	return "[area.name] : [equipment]/[lighting]/[environ] ([lastused_equip+lastused_light+lastused_environ]) : [cell? cell.percent() : "N/C"] ([charging])"
 
 /obj/machinery/power/apc/proc/update()
+	var/old_power_light = area.power_light
+	var/old_power_environ = area.power_environ
+	var/old_power_equip = area.power_equip
 	if(operating && !shorted && !failure_timer)
 
-		//prevent unnecessary updates to emergency lighting
-		var/new_power_light = (lighting >= POWERCHAN_ON)
-		if(area.power_light != new_power_light)
-			area.power_light = new_power_light
-			area.set_emergency_lighting(lighting == POWERCHAN_OFF_AUTO) //if lights go auto-off, emergency lights go on
-
+		area.power_light = (lighting >= POWERCHAN_ON)
 		area.power_equip = (equipment >= POWERCHAN_ON)
 		area.power_environ = (environ >= POWERCHAN_ON)
+
+		//prevent unnecessary updates to emergency lighting
+		if(area.power_light != old_power_light)
+			area.set_emergency_lighting(lighting == POWERCHAN_OFF_AUTO) //if lights go auto-off, emergency lights go on
 	else
 		area.power_light = 0
 		area.power_equip = 0
 		area.power_environ = 0
 
-	area.power_change()
+	if(area.power_light != old_power_light || area.power_environ != old_power_environ || area.power_equip != old_power_equip)
+		area.power_change()
 
 	var/obj/item/cell/cell = get_cell()
-	if(!cell || cell.charge <= 0)
-		if(needs_powerdown_sound == TRUE)
+	if(!powered_down)
+		if(!cell || cell.charge <= 0)
 			playsound(src, 'sound/machines/apc_nopower.ogg', 75, 0)
-			needs_powerdown_sound = FALSE
-		else
-			needs_powerdown_sound = TRUE
+			powered_down  = TRUE
+
+	else if(cell?.charge > 0)
+		powered_down  = FALSE
 
 /obj/machinery/power/apc/proc/isWireCut(var/wireIndex)
 	return wires.IsIndexCut(wireIndex)
@@ -728,7 +736,7 @@
 		. += area.usage(ENVIRON)
 
 /obj/machinery/power/apc/Process()
-	if(!area.requires_power)
+	if(!area?.requires_power)
 		return PROCESS_KILL
 
 	if(stat & (BROKEN|MAINT))
@@ -959,6 +967,12 @@
 			environ = state
 	force_update_channels()
 
-
+/obj/machinery/power/apc/area_changed()
+	. = ..()
+	//Make sure to resume processing if our area changed to something else than null
+	if(QDELETED(src))
+		return
+	if(area && !(processing_flags & MACHINERY_PROCESS_SELF))
+		START_PROCESSING_MACHINE(src, MACHINERY_PROCESS_SELF)
 
 #undef APC_UPDATE_ICON_COOLDOWN

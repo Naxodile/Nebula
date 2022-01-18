@@ -119,6 +119,10 @@
 	name = "large air vent"
 	power_channel = EQUIP
 	power_rating = 45000
+	base_type = /obj/machinery/atmospherics/unary/vent_pump/high_volume/buildable
+
+/obj/machinery/atmospherics/unary/vent_pump/high_volume/buildable
+	uncreated_component_parts = null
 
 /obj/machinery/atmospherics/unary/vent_pump/high_volume/Initialize()
 	. = ..()
@@ -168,7 +172,6 @@
 	//Figure out the target pressure difference
 	var/pressure_delta = get_pressure_delta(environment)
 	var/transfer_moles
-	//src.visible_message("DEBUG >>> [src]: pressure_delta = [pressure_delta]")
 
 	if((environment.temperature || air_contents.temperature) && pressure_delta > 0.5)
 		if(pump_direction) //internal -> external
@@ -288,7 +291,7 @@
 			"You hear welding.")
 		return 1
 	if(isMultitool(W))
-		var/datum/browser/written/popup = new(user, "Vent Configuration Utility", "[src] Configuration Panel", 600, 200)
+		var/datum/browser/written_digital/popup = new(user, "Vent Configuration Utility", "[src] Configuration Panel", 600, 200)
 		popup.set_content(jointext(get_console_data(),"<br>"))
 		popup.open()
 		return TRUE
@@ -298,7 +301,7 @@
 /obj/machinery/atmospherics/unary/vent_pump/examine(mob/user, distance)
 	. = ..()
 	if(distance <= 1)
-		to_chat(user, "A small gauge in the corner reads [round(last_flow_rate, 0.1)] L/s; [round(last_power_draw)] W")
+		to_chat(user, "A small gauge in the corner reads [round(last_flow_rate, 0.1)] L/s; [round(last_power_draw)] W.")
 	else
 		to_chat(user, "You are too far away to read the gauge.")
 	if(welded)
@@ -310,7 +313,7 @@
 			return SPAN_WARNING("You cannot unwrench \the [src], turn it off first.")
 		var/turf/T = src.loc
 		var/hidden_pipe_check = FALSE
-		for(var/obj/machinery/atmospherics/node as anything in nodes_to_networks)
+		for(var/obj/machinery/atmospherics/node AS_ANYTHING in nodes_to_networks)
 			if(node.level)
 				hidden_pipe_check = TRUE
 				break

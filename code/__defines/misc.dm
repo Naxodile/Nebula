@@ -99,11 +99,8 @@
 #ifndef CUSTOM_ITEM_CONFIG
 #define CUSTOM_ITEM_CONFIG "config/custom_items/"
 #endif
-#ifndef CUSTOM_ITEM_SYNTH_CONFIG
-#define CUSTOM_ITEM_SYNTH_CONFIG "config/custom_sprites.txt"
-#endif
-#ifndef CUSTOM_ITEM_SYNTH
-#define CUSTOM_ITEM_SYNTH 'icons/mob/custom_synthetic.dmi'
+#ifndef CUSTOM_ICON_CONFIG
+#define CUSTOM_ICON_CONFIG "config/custom_icons/"
 #endif
 
 #define WALL_CAN_OPEN 1
@@ -160,8 +157,6 @@
 #define CELLSIZE (world.icon_size/CELLS)	//Size of a cell in pixels
 
 #define PIXEL_MULTIPLIER WORLD_ICON_SIZE/32
-
-#define DEFAULT_SPAWNPOINT_ID "Default"
 
 #define MIDNIGHT_ROLLOVER		864000	//number of deciseconds in a day
 
@@ -259,10 +254,38 @@
 #define WORTH_TO_SUPPLY_POINTS_CONSTANT       0.03
 #define WORTH_TO_SUPPLY_POINTS_ROUND_CONSTANT 5
 
-#define  ICON_STATE_WORLD  "world"
-#define  ICON_STATE_INV  "inventory"
+#define ICON_STATE_WORLD "world"
+#define ICON_STATE_INV   "inventory"
 
 #define hex2num(X) text2num(X, 16)
 
-#define GET_DECL(D) (ispath(D, /decl) ? (decls_repository.fetched_decls[D] || decls_repository.get_decl(D)) : null)
 #define Z_ALL_TURFS(Z) block(locate(1, 1, Z), locate(world.maxx, world.maxy, Z))
+
+#if DM_BUILD < 1540
+#define AS_ANYTHING as()
+#else
+#define AS_ANYTHING as anything
+#endif
+
+//NOTE: INTENT_HOTKEY_* defines are not actual intents!
+//they are here to support hotkeys
+#define INTENT_HOTKEY_LEFT  "left"
+#define INTENT_HOTKEY_RIGHT "right"
+
+//Turf/area values for 'this space is outside' checks
+#define OUTSIDE_AREA null
+#define OUTSIDE_NO   FALSE
+#define OUTSIDE_YES  TRUE
+
+// Weather exposure values for being rained on or hailed on.
+#define WEATHER_IGNORE    -1
+#define WEATHER_PROTECTED  0
+#define WEATHER_EXPOSED    1
+
+// Literacy check constants.
+#define WRITTEN_SKIP     0
+#define WRITTEN_PHYSICAL 1
+#define WRITTEN_DIGITAL  2
+
+// arbitrary low pressure bound for wind weather effects
+#define MIN_WIND_PRESSURE 10

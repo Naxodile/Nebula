@@ -1,17 +1,24 @@
-/mob/Destroy()//This makes sure that mobs with clients/keys are not just deleted from the game.
+/mob/Destroy() //This makes sure that mobs with clients/keys are not just deleted from the game.
 	STOP_PROCESSING(SSmobs, src)
 	global.dead_mob_list_ -= src
 	global.living_mob_list_ -= src
 	global.player_list -= src
+
+	QDEL_NULL_LIST(pinned)
+	QDEL_NULL_LIST(embedded)
+
 	unset_machine()
 	QDEL_NULL(hud_used)
+	if(s_active)
+		s_active.close(src)
 	if(istype(ability_master))
 		QDEL_NULL(ability_master)
 	if(istype(skillset))
 		QDEL_NULL(skillset)
 	QDEL_NULL_LIST(grabbed_by)
 	clear_fullscreen()
-	QDEL_NULL(ai)
+	if(istype(ai))
+		QDEL_NULL(ai)
 	if(client)
 		remove_screen_obj_references()
 		for(var/atom/movable/AM in client.screen)
@@ -48,7 +55,8 @@
 
 /mob/Initialize()
 	. = ..()
-	skillset = new skillset(src)
+	if(ispath(skillset))
+		skillset = new skillset(src)
 	if(!move_intent)
 		move_intent = move_intents[1]
 	if(ispath(move_intent))
@@ -192,11 +200,11 @@
 	return 0
 
 #define ENCUMBERANCE_MOVEMENT_MOD 0.35
-/mob/proc/movement_delay()
+/mob/proc/get_movement_delay(var/travel_dir)
 	. = 0
-	if(istype(loc, /turf))
+	if(isturf(loc))
 		var/turf/T = loc
-		. += T.movement_delay
+		. += T.get_movement_delay(travel_dir)
 	if(HAS_STATUS(src, STAT_DROWSY))
 		. += 6
 	if(lying) //Crawling, it's slower
@@ -205,7 +213,7 @@
 #undef ENCUMBERANCE_MOVEMENT_MOD
 
 /mob/proc/encumbrance()
-	for(var/obj/item/grab/G as anything in get_active_grabs())
+	for(var/obj/item/grab/G AS_ANYTHING in get_active_grabs())
 		. = max(., G.grab_slowdown())
 	. *= (0.8 ** size_strength_mod())
 	. *= (0.5 + 1.5 * (SKILL_MAX - get_skill_value(SKILL_HAULING))/(SKILL_MAX - SKILL_MIN))
@@ -256,7 +264,7 @@
 /mob/proc/incapacitated(var/incapacitation_flags = INCAPACITATION_DEFAULT)
 	if(status_flags & ENABLE_AI)
 		return TRUE
-	if((incapacitation_flags & INCAPACITATION_FORCELYING) && (resting || pinned.len))
+	if((incapacitation_flags & INCAPACITATION_FORCELYING) && (resting || LAZYLEN(pinned)))
 		return TRUE
 	if((incapacitation_flags & INCAPACITATION_RESTRAINED) && restrained())
 		return TRUE
@@ -305,6 +313,9 @@
 /mob/verb/examinate(atom/A as mob|obj|turf in view())
 	set name = "Examine"
 	set category = "IC"
+
+	if(!usr || !usr.client)
+		return
 
 	if((is_blind(src) || usr.stat) && !isobserver(src))
 		to_chat(src, "<span class='notice'>Something is there but you can't see it.</span>")
@@ -513,8 +524,6 @@
 	return stat == DEAD
 
 /mob/proc/is_mechanical()
-	if(mind && (mind.assigned_role == "Robot" || mind.assigned_role == "AI"))
-		return 1
 	return istype(src, /mob/living/silicon)
 
 /mob/proc/is_ready()
@@ -575,14 +584,14 @@
 						continue
 					if(A.invisibility > see_invisible)
 						continue
-					if(is_type_in_list(A, shouldnt_see))
+					if(LAZYLEN(shouldnt_see) && is_type_in_list(A, shouldnt_see))
 						continue
 					stat(A)
 
 
 // facing verbs
 /mob/proc/canface()
-	return !incapacitated()
+	return !incapacitated(INCAPACITATION_UNRESISTING)
 
 // Not sure what to call this. Used to check if humans are wearing an AI-controlled exosuit and hence don't need to fall over yet.
 /mob/proc/can_stand_overridden()
@@ -610,6 +619,7 @@
 		drop_held_items()
 	else
 		set_density(initial(density))
+
 	reset_layer()
 
 	//Temporarily moved here from the various life() procs
@@ -617,16 +627,9 @@
 	//It just makes sense for now. ~Carn
 	if( update_icon )	//forces a full overlay update
 		update_icon = 0
-		regenerate_icons()
+		update_icon()
 	if( lying != last_lying )
 		update_transform()
-
-/mob/proc/reset_layer()
-	if(lying)
-		plane = DEFAULT_PLANE
-		layer = LYING_MOB_LAYER
-	else
-		reset_plane_and_layer()
 
 /mob/proc/facedir(var/ndir)
 	if(!canface() || moving || (buckled && (!buckled.buckle_movable && !buckled.buckle_allow_rotation)))
@@ -634,7 +637,7 @@
 	set_dir(ndir)
 	if(buckled && buckled.buckle_movable)
 		buckled.set_dir(ndir)
-	SetMoveCooldown(movement_delay())
+	SetMoveCooldown(get_movement_delay(ndir))
 	return 1
 
 
@@ -681,15 +684,15 @@
 	return visible_implants
 
 /mob/proc/embedded_needs_process()
-	return (embedded.len > 0)
+	return !!LAZYLEN(embedded)
 
 /mob/proc/remove_implant(var/obj/item/implant, var/surgical_removal = FALSE)
 	if(!LAZYLEN(get_visible_implants(0))) //Yanking out last object - removing verb.
 		verbs -= /mob/proc/yank_out_object
 	for(var/obj/item/O in pinned)
 		if(O == implant)
-			pinned -= O
-		if(!pinned.len)
+			LAZYREMOVE(pinned, O)
+		if(!LAZYLEN(pinned))
 			anchored = 0
 	implant.dropInto(loc)
 	implant.add_blood(src)
@@ -700,7 +703,7 @@
 	. = TRUE
 
 /mob/living/silicon/robot/remove_implant(var/obj/item/implant, var/surgical_removal = FALSE)
-	embedded -= implant
+	LAZYREMOVE(embedded, implant)
 	adjustBruteLoss(5)
 	adjustFireLoss(10)
 	. = ..()
@@ -713,7 +716,7 @@
 					affected = organ
 					break
 	if(affected)
-		affected.implants -= implant
+		LAZYREMOVE(affected.implants, implant)
 		for(var/datum/wound/wound in affected.wounds)
 			LAZYREMOVE(wound.embedded_objects, implant)
 		if(!surgical_removal)
@@ -778,11 +781,6 @@
 		var/mob/living/carbon/human/human_user = U
 		human_user.bloody_hands(src)
 	return 1
-
-// A mob should either use update_icon(), overriding this definition, or use update_icons(), not touching update_icon().
-// It should not use both.
-/mob/on_update_icon()
-	return update_icons()
 
 /mob/verb/face_direction()
 
@@ -974,7 +972,7 @@
 /mob/proc/lose_hair()
 	return
 
-/mob/proc/handle_reading_literacy(var/mob/user, var/text_content, var/skip_delays)
+/mob/proc/handle_reading_literacy(var/mob/user, var/text_content, var/skip_delays, var/digital = FALSE)
 	if(!skip_delays)
 		to_chat(src, SPAN_WARNING("You can't make heads or tails of the words."))
 	. = stars(text_content, 5)
@@ -1028,12 +1026,75 @@
 /mob/proc/get_bodytype()
 	return
 
-/mob/verb/toggle_help_info()
-	set name = "Toggle Examine Help"
-	set desc = "Sets whether codex information is shown in examine text."
-	set category = "IC"
-	inquisitive_examine = !inquisitive_examine
-	if(inquisitive_examine)
-		to_chat(src, SPAN_NOTICE("You will now see additional information on examine."))
-	else
-		to_chat(src, SPAN_NOTICE("You will no longer see additional information on examine."))
+/// Update the mouse pointer of the attached client in this mob.
+/mob/proc/update_mouse_pointer()
+	if(!client)
+		return
+
+	client.mouse_pointer_icon = initial(client.mouse_pointer_icon)
+	
+	if(examine_cursor_icon && client.keys_held["Shift"])
+		client.mouse_pointer_icon = examine_cursor_icon
+
+/mob/keybind_face_direction(direction)
+	facedir(direction)
+
+/mob/proc/check_emissive_equipment()
+	var/old_zflags = z_flags
+	z_flags &= ~ZMM_MANGLE_PLANES
+	for(var/atom/movable/AM in get_equipped_items(TRUE))
+		if(AM.z_flags & ZMM_MANGLE_PLANES)
+			z_flags |= ZMM_MANGLE_PLANES
+			break
+	if(old_zflags != z_flags)
+		UPDATE_OO_IF_PRESENT
+
+/mob/get_mob()
+	return src
+
+/mob/proc/set_glide_size(var/delay)
+	glide_size = ADJUSTED_GLIDE_SIZE(delay)
+
+/mob/proc/get_weather_protection()
+	for(var/obj/item/brolly in get_held_items())
+		if(brolly.gives_weather_protection())
+			LAZYADD(., brolly)
+	if(!LAZYLEN(.))
+		for(var/turf/T AS_ANYTHING in RANGE_TURFS(loc, 1))
+			for(var/obj/structure/flora/tree/tree in T)
+				if(tree.protects_against_weather)
+					LAZYADD(., tree)
+
+/mob/living/carbon/human/get_weather_protection()
+	. = ..()
+	if(!LAZYLEN(.))
+		var/obj/item/clothing/head/check_head = head
+		if(!istype(check_head) || !check_head.protects_against_weather)
+			return
+		var/obj/item/clothing/suit/check_body = wear_suit
+		if(!istype(check_body) || !check_body.protects_against_weather)
+			return
+		LAZYADD(., check_head)
+		LAZYADD(., check_body)
+
+/mob/proc/get_weather_exposure(var/obj/abstract/weather_system/weather)
+	var/turf/T = loc
+
+	// We're inside something else.
+	if(!istype(T)) 
+		return WEATHER_PROTECTED
+	
+	// Either we're outside being rained on, or we're in turf-local weather being rained on.
+	if(T.is_outside() || T.weather == weather) 
+		var/list/weather_protection = get_weather_protection()
+		if(LAZYLEN(weather_protection))
+			return WEATHER_PROTECTED
+		return WEATHER_EXPOSED
+
+	// The z-level has weather, but we aren't standing in it, so it's probably above us.
+	T = GetAbove(T)
+	if(!T || !T.is_open())
+		return WEATHER_PROTECTED
+
+	// We're inside, and more than one z-level below the roof, so ignore it.
+	return WEATHER_IGNORE

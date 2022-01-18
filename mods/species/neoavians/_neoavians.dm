@@ -1,16 +1,13 @@
 #define SPECIES_AVIAN            "Teshari"
 #define BODYTYPE_AVIAN           "avian body"
 #define IS_AVIAN                 "teshari"
+#define BODY_FLAG_AVIAN          BITFLAG(6)
 
 /decl/modpack/neoavians
 	name = "Neo-Avian Content"
 
-/decl/modpack/neoavians/initialize()
+/decl/prosthetics_manufacturer/Initialize()
 	. = ..()
-	LAZYSET(global.holder_mob_icons, lowertext(SPECIES_AVIAN), 'mods/species/neoavians/icons/holder.dmi')
-
-/decl/prosthetics_manufacturer/New()
-	..()
 	LAZYDISTINCTADD(bodytypes_cannot_use, BODYTYPE_AVIAN)
 
 /obj/machinery/suit_cycler/Initialize(mapload, d, populate_parts)

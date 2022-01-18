@@ -7,16 +7,6 @@
 		return 1
 	return 0
 
-/proc/max_default_z_level()
-	var/max_z = 0
-	for(var/z in global.using_map.station_levels)
-		max_z = max(z, max_z)
-	for(var/z in global.using_map.admin_levels)
-		max_z = max(z, max_z)
-	for(var/z in global.using_map.player_levels)
-		max_z = max(z, max_z)
-	return max_z
-
 /proc/living_observers_present(var/list/zlevels)
 	if(LAZYLEN(zlevels))
 		for(var/mob/M in global.player_list) //if a tree ticks on the empty zlevel does it really tick
@@ -118,7 +108,7 @@
 	return dist
 
 /proc/get_dist_bounds(var/target, var/source) // Alternative to get_dist for multi-turf objects
-	return Ceiling(bounds_dist(target, source)/world.icon_size) + 1
+	return CEILING(bounds_dist(target, source)/world.icon_size) + 1
 
 /proc/circlerangeturfs(center=usr,radius=3)
 	var/turf/centerturf = get_turf(center)
@@ -492,7 +482,7 @@
 					rstats[i] = environment.vars[stats[i]]
 		else if(istype(T, /turf/simulated))
 			rstats = null // Exclude zone (wall, door, etc).
-		else if(istype(T, /turf))
+		else if(isturf(T))
 			// Should still work.  (/turf/return_air())
 			var/datum/gas_mixture/environment = T.return_air()
 			for(var/i=1;i<=stats.len;i++)

@@ -21,7 +21,7 @@
 /obj/aiming_overlay/Initialize()
 	. = ..()
 	owner = loc
-	loc = null
+	forceMove(null)
 	verbs.Cut()
 
 /obj/aiming_overlay/proc/toggle_permission(var/perm)
@@ -113,7 +113,7 @@
 		to_chat(owner, SPAN_WARNING("You must keep hold of your weapon!"))
 	else if(GET_STATUS(owner, STAT_BLIND))
 		to_chat(owner, SPAN_WARNING("You are blind and cannot see your target!"))
-	else if(!aiming_at || !istype(aiming_at.loc, /turf))
+	else if(!aiming_at || !isturf(aiming_at.loc))
 		to_chat(owner, SPAN_WARNING("You have lost sight of your target!"))
 	else if(owner.incapacitated() || owner.lying || owner.restrained())
 		to_chat(owner, SPAN_WARNING("You must be conscious and standing to keep track of your target!"))
@@ -140,26 +140,27 @@
 		return
 
 	if(owner.incapacitated())
-		to_chat(owner, "<span class='warning'>You cannot aim a gun in your current state.</span>")
+		to_chat(owner, SPAN_WARNING("You cannot You cannot threaten \the [target] with \the [thing] in your current state."))
 		return
 	if(owner.lying)
-		to_chat(owner, "<span class='warning'>You cannot aim a gun while prone.</span>")
+		to_chat(owner, SPAN_WARNING("You cannot threaten \the [target] with \the [thing] while prone."))
 		return
 	if(owner.restrained())
-		to_chat(owner, "<span class='warning'>You cannot aim a gun while handcuffed.</span>")
+		to_chat(owner, SPAN_WARNING("You cannot threaten \the [target] with \the [thing] while handcuffed."))
 		return
 
 	if(aiming_at)
 		if(aiming_at == target)
 			return
 		cancel_aiming(1)
-		owner.visible_message("<span class='danger'>\The [owner] turns \the [thing] on \the [target]!</span>")
+		owner.visible_message(SPAN_DANGER("\The [owner] turns \the [thing] on \the [target]!"))
 	else
-		owner.visible_message("<span class='danger'>\The [owner] aims \the [thing] at \the [target]!</span>")
+		owner.visible_message(SPAN_DANGER("\The [owner] aims \the [thing] at \the [target]!"))
 
 	if(owner.client)
 		owner.client.add_gun_icons()
-	to_chat(target, "<span class='danger'>You now have a gun pointed at you. No sudden moves!</span>")
+	var/decl/pronouns/pronouns = owner.get_pronouns()
+	to_chat(target, FONT_LARGE(SPAN_DANGER("\The [owner] [pronouns.is] menacing you with \a [thing]. No sudden moves!")))
 	aiming_with = thing
 	aiming_at = target
 	if(istype(aiming_with, /obj/item/gun))
@@ -224,7 +225,7 @@
 		aiming_at = null
 
 	aiming_with = null
-	loc = null
+	forceMove(null)
 	STOP_PROCESSING(SSobj, src)
 
 /obj/aiming_overlay/proc/target_moved()

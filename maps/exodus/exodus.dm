@@ -4,6 +4,7 @@
 	#include "../../mods/content/bigpharma/_bigpharma.dme"
 	#include "../../mods/content/corporate/_corporate.dme"
 	#include "../../mods/content/government/_government.dme"
+	#include "../../mods/content/matchmaking/_matchmaking.dme"
 	#include "../../mods/content/modern_earth/_modern_earth.dme"
 	#include "../../mods/content/mouse_highlights/_mouse_highlight.dme"
 	#include "../../mods/content/psionics/_psionics.dme"
@@ -45,6 +46,7 @@
 	#include "jobs/medical.dm"
 	#include "jobs/science.dm"
 	#include "jobs/security.dm"
+	#include "jobs/synthetics.dm"
 
 	#include "outfits/_pda.dm"
 	#include "outfits/cargo.dm"
@@ -60,6 +62,7 @@
 	#include "exodus_cameras.dm"
 	#include "exodus_areas.dm"
 	#include "exodus_elevator.dm"
+	#include "exodus_departments.dm"
 	#include "exodus_jobs.dm"
 	#include "exodus_loadout.dm"
 	#include "exodus_overmap.dm"

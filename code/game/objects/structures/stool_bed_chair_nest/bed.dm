@@ -21,6 +21,8 @@
 	material = DEFAULT_FURNITURE_MATERIAL
 	material_alteration = MAT_FLAG_ALTERATION_ALL
 	tool_interaction_flags = TOOL_INTERACTION_DECONSTRUCT
+	parts_amount = 2
+	parts_type = /obj/item/stack/material/strut
 
 /obj/structure/bed/get_base_value()
 	. = round(..() * 2.5) // Utility structures should be worth more than their matter (wheelchairs, rollers, etc).
@@ -42,14 +44,12 @@
 // Reuse the cache/code from stools, todo maybe unify.
 /obj/structure/bed/on_update_icon()
 	..()
-	var/new_overlays
 	if(istype(reinf_material))
 		var/image/I = image(icon, "[icon_state]_padding")
 		if(material_alteration & MAT_FLAG_ALTERATION_COLOR)
 			I.appearance_flags |= RESET_COLOR
 			I.color = reinf_material.color
-		LAZYADD(new_overlays, I)
-	overlays = new_overlays
+			add_overlay(I)
 
 /obj/structure/bed/CanPass(atom/movable/mover, turf/target, height=0, air_group=0)
 	if(istype(mover) && mover.checkpass(PASS_FLAG_TABLE))
@@ -84,7 +84,7 @@
 				to_chat(user, "You cannot pad \the [src] with that.")
 				return
 			C.use(1)
-			if(!istype(src.loc, /turf))
+			if(!isturf(src.loc))
 				src.forceMove(get_turf(src))
 			to_chat(user, "You add padding to \the [src].")
 			add_padding(padding_type)
@@ -107,20 +107,6 @@
 					if(user_buckle_mob(affecting, user))
 						qdel(W)
 
-/obj/structure/bed/Move()
-	. = ..()
-	if(buckled_mob)
-		buckled_mob.glide_size = glide_size // Setting loc apparently does animate with glide size.
-		buckled_mob.forceMove(loc)
-
-/obj/structure/bed/forceMove()
-	. = ..()
-	if(buckled_mob)
-		if(isturf(src.loc))
-			buckled_mob.forceMove(src.loc)
-		else
-			unbuckle_mob()
-
 /obj/structure/bed/proc/remove_padding()
 	if(reinf_material)
 		reinf_material.create_object(get_turf(src))
@@ -135,9 +121,9 @@
 	name = "psychiatrist's couch"
 	desc = "For prime comfort during psychiatric evaluations."
 	icon_state = "psychbed"
-
-/obj/structure/bed/psych
 	material = /decl/material/solid/wood/walnut
+
+/obj/structure/bed/psych/leather
 	reinf_material = /decl/material/solid/leather
 
 /obj/structure/bed/padded
@@ -152,14 +138,15 @@
 	icon = 'icons/obj/structures/rollerbed.dmi'
 	icon_state = "down"
 	anchored = 0
-	buckle_pixel_shift = @"{'x':0,'y':0,'z':6}"
+	buckle_pixel_shift = list("x" = 0, "y" = 0, "z" = 6)
+	movable_flags = MOVABLE_FLAG_WHEELED
 	var/item_form_type = /obj/item/roller	//The folded-up object path.
 	var/obj/item/chems/beaker
 	var/iv_attached = 0
 	var/iv_stand = TRUE
 
 /obj/structure/bed/roller/on_update_icon()
-	overlays.Cut()
+	cut_overlays()
 	if(density)
 		icon_state = "up"
 	else
@@ -174,7 +161,7 @@
 			iv.overlays += image(icon, "light_low")
 		if(density)
 			iv.pixel_y = 6
-		overlays += iv
+		add_overlay(iv)
 
 /obj/structure/bed/roller/attackby(obj/item/I, mob/user)
 	if(isWrench(I) || istype(I, /obj/item/stack) || isWirecutter(I))

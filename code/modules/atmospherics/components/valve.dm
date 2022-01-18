@@ -15,6 +15,7 @@
 	connect_types = CONNECT_TYPE_REGULAR|CONNECT_TYPE_SUPPLY|CONNECT_TYPE_SCRUBBER|CONNECT_TYPE_FUEL
 	connect_dir_type = SOUTH | NORTH
 	rotate_class = PIPE_ROTATE_TWODIR
+	pipe_class = PIPE_CLASS_BINARY
 	build_icon_state = "mvalve"
 
 	uncreated_component_parts = list(
@@ -23,6 +24,7 @@
 	frame_type = /obj/item/pipe
 	construct_state = /decl/machine_construction/default/panel_closed/item_chassis
 	base_type = /obj/machinery/atmospherics/valve/buildable
+	interact_offline = TRUE
 
 /obj/machinery/atmospherics/valve/buildable
 	uncreated_component_parts = null
@@ -44,7 +46,7 @@
 
 /obj/machinery/atmospherics/valve/network_expand(datum/pipe_network/new_network, obj/machinery/atmospherics/pipe/reference)
 	if(open) // connect everything
-		for(var/obj/machinery/atmospherics/node as anything in nodes_to_networks)
+		for(var/obj/machinery/atmospherics/node AS_ANYTHING in nodes_to_networks)
 			if(nodes_to_networks[node] != new_network)
 				QDEL_NULL(nodes_to_networks[node])
 				nodes_to_networks[node] = new_network

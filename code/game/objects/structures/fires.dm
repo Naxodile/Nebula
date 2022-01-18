@@ -231,7 +231,7 @@
 			var/obj/item/stack/stack = thing
 			if(stack.material.fuel_value > 0)
 				var/fuel_per_unit = 2 * stack.material.fuel_value
-				var/use_stacks = min(stack.amount, Floor((IDEAL_FUEL - fuel) / fuel_per_unit))
+				var/use_stacks = min(stack.amount, FLOOR((IDEAL_FUEL - fuel) / fuel_per_unit))
 				var/add_fuel = round(fuel_per_unit * use_stacks)
 				if(stack.material.burn_product)
 					if(waste[stack.material.burn_product])
@@ -323,7 +323,7 @@
 	queue_icon_update()
 
 /obj/structure/fire_source/on_update_icon()
-	cut_overlays()
+	..()
 	if((fuel || length(contents)) && (lit != FIRE_DEAD))
 		add_overlay("[icon_state]_full")
 	switch(lit)

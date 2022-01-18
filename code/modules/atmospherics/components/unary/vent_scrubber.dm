@@ -169,7 +169,7 @@
 			return SPAN_WARNING("You cannot take this [src] apart, turn it off first.")
 		var/turf/T = get_turf(src)
 		var/hidden_pipe_check = FALSE
-		for(var/obj/machinery/atmospherics/node as anything in nodes_to_networks)
+		for(var/obj/machinery/atmospherics/node AS_ANYTHING in nodes_to_networks)
 			if(node.level)
 				hidden_pipe_check = TRUE
 				break
@@ -221,7 +221,7 @@
 /obj/machinery/atmospherics/unary/vent_scrubber/examine(mob/user, distance)
 	. = ..()
 	if(distance <= 1)
-		to_chat(user, "A small gauge in the corner reads [round(last_flow_rate, 0.1)] L/s; [round(last_power_draw)] W")
+		to_chat(user, "A small gauge in the corner reads [round(last_flow_rate, 0.1)] L/s; [round(last_power_draw)] W.")
 	else
 		to_chat(user, "You are too far away to read the gauge.")
 	if(welded)

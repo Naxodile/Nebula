@@ -52,7 +52,7 @@
 		to_chat(penman, "<span class='notice'>There is no room left to write on [head_name]!</span>")
 		return
 
-	var/graffiti = sanitizeSafe(input(penman, "Enter a message to write on [head_name]:") as text|null, MAX_NAME_LEN)
+	var/graffiti = sanitize_safe(input(penman, "Enter a message to write on [head_name]:") as text|null, MAX_NAME_LEN)
 	if(graffiti)
 		if(!target.Adjacent(penman))
 			to_chat(penman, "<span class='notice'>[head_name] is too far away.</span>")
@@ -107,7 +107,8 @@
 
 			// Floating eyes or other effects.
 			var/image/eye_glow = get_eye_overlay()
-			if(eye_glow) overlays |= eye_glow
+			if(eye_glow) 
+				overlays |= eye_glow
 
 		if(owner.lip_style && !BP_IS_PROSTHETIC(src) && (species && (species.appearance_flags & HAS_LIPS)))
 			var/icon/lip_icon = new/icon(bodytype.get_lip_icon(owner) || 'icons/mob/human_races/species/lips.dmi', "lipstick_s")	
@@ -122,7 +123,7 @@
 /obj/item/organ/external/head/proc/get_hair_icon()
 	var/image/res = image(bodytype.icon_template,"")
 	if(owner.f_style)
-		var/datum/sprite_accessory/facial_hair_style = global.facial_hair_styles_list[owner.f_style]
+		var/decl/sprite_accessory/facial_hair_style = GET_DECL(owner.f_style)
 		if(facial_hair_style)
 			if(!facial_hair_style.species_allowed || (species.get_root_species_name(owner) in facial_hair_style.species_allowed))
 				if(!facial_hair_style.subspecies_allowed || (species.name in facial_hair_style.subspecies_allowed))
@@ -132,11 +133,10 @@
 					res.overlays |= facial_s
 
 	if(owner.h_style)
-		var/style = owner.h_style
-		var/datum/sprite_accessory/hair/hair_style = global.hair_styles_list[style]
+		var/decl/sprite_accessory/hair/hair_style = GET_DECL(owner.h_style)
 		if(owner.head && (owner.head.flags_inv & BLOCKHEADHAIR))
 			if(!(hair_style.flags & VERY_SHORT))
-				hair_style = global.hair_styles_list["Short Hair"]
+				hair_style = GET_DECL(/decl/sprite_accessory/hair/short)
 		if(hair_style)
 			if(!hair_style.species_allowed || (species.get_root_species_name(owner) in hair_style.species_allowed))
 				if(!hair_style.subspecies_allowed || (species.name in hair_style.subspecies_allowed))
@@ -146,19 +146,19 @@
 					res.overlays |= hair_s
 
 	for (var/M in markings)
-		var/datum/sprite_accessory/marking/mark_style = markings[M]["datum"]
+		var/decl/sprite_accessory/marking/mark_style = GET_DECL(M)
 		if (mark_style.draw_target == MARKING_TARGET_HAIR)
 			var/icon/mark_icon = new/icon("icon" = mark_style.icon, "icon_state" = "[mark_style.icon_state]")
 			if (!mark_style.do_colouration && owner.h_style)
-				var/datum/sprite_accessory/hair/hair_style = global.hair_styles_list[owner.h_style]
+				var/decl/sprite_accessory/hair/hair_style = GET_DECL(owner.h_style)
 				if ((~hair_style.flags & HAIR_BALD) && hair_colour)
 					mark_icon.Blend(hair_colour, ICON_ADD)
 				else //only baseline human skin tones; others will need species vars for coloration
 					mark_icon.Blend(rgb(200 + skin_tone, 150 + skin_tone, 123 + skin_tone), ICON_ADD)
 			else
-				mark_icon.Blend(markings[M]["color"], ICON_ADD)
+				mark_icon.Blend(markings[M], ICON_ADD)
 			res.overlays |= mark_icon
-			icon_cache_key += "[M][markings[M]["color"]]"
+			icon_cache_key += "[M][markings[M]]"
 
 	return res
 

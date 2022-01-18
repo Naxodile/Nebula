@@ -36,20 +36,42 @@ var/global/list/department_radio_keys = list(
 	  ":Z" = "Entertainment",".Z" = "Entertainment",
 	  ":Y" = "Exploration",		".Y" = "Exploration",
 
-	  //kinda localization -- rastaf0
-	  //same keys as above, but on russian keyboard layout. This file uses cp1251 as encoding.
-	  ":ê" = "right ear",	".ê" = "right ear",
-	  ":ä" = "left ear",	".ä" = "left ear",
-	  ":ø" = "intercom",	".ø" = "intercom",
-	  ":ð" = "department",	".ð" = "department",
-	  ":ñ" = "Command",		".ñ" = "Command",
-	  ":ò" = "Science",		".ò" = "Science",
-	  ":ü" = "Medical",		".ü" = "Medical",
-	  ":ó" = "Engineering",	".ó" = "Engineering",
-	  ":û" = "Security",	".û" = "Security",
-	  ":ö" = "whisper",		".ö" = "whisper",
-	  ":å" = "Mercenary",	".å" = "Mercenary",
-	  ":é" = "Supply",		".é" = "Supply",
+//russian version below
+	  ":к" = "right ear",	".к" = "right ear",
+	  ":д" = "left ear",	".д" = "left ear",
+	  ":ш" = "intercom",	".ш" = "intercom",
+	  ":р" = "department",	".р" = "department",
+	  ":с" = "Command",		".с" = "Command",
+	  ":т" = "Science",		".т" = "Science",
+	  ":ь" = "Medical",		".ь" = "Medical",
+	  ":у" = "Engineering",	".у" = "Engineering",
+	  ":ы" = "Security",	".ы" = "Security",
+	  ":ц" = "whisper",		".ц" = "whisper",
+	  ":е" = "Mercenary",	".е" = "Mercenary",
+	  ":г" = "Supply",		".г" = "Supply",
+	  ":ч" = "Raider",		".ч" = "Raider",
+	  ":м" = "Service",		".м" = "Service",
+	  ":з" = "AI Private",	".з" = "AI Private",
+	  ":я" = "Entertainment",".я" = "Entertainment",
+	  ":н" = "Exploration",		".н" = "Exploration",
+
+	  ":К" = "right ear",	".К" = "right ear",
+	  ":Д" = "left ear",	".Д" = "left ear",
+	  ":Ш" = "intercom",	".Ш" = "intercom",
+	  ":Р" = "department",	".Р" = "department",
+	  ":С" = "Command",		".С" = "Command",
+	  ":Т" = "Science",		".Т" = "Science",
+	  ":Ь" = "Medical",		".Ь" = "Medical",
+	  ":У" = "Engineering",	".У" = "Engineering",
+	  ":Ы" = "Security",	".Ы" = "Security",
+	  ":Ц" = "whisper",		".Ц" = "whisper",
+	  ":Е" = "Mercenary",	".Е" = "Mercenary",
+	  ":Г" = "Supply",		".Г" = "Supply",
+	  ":Ч" = "Raider",		".Ч" = "Raider",
+	  ":М" = "Service",		".М" = "Service",
+	  ":З" = "AI Private",	".З" = "AI Private",
+	  ":Я" = "Entertainment",".Я" = "Entertainment",
+	  ":Н" = "Exploration",		".Н" = "Exploration",
 )
 
 
@@ -122,9 +144,10 @@ var/global/list/channel_to_radio_key = new
 
 /mob/living/proc/handle_message_mode(message_mode, message, verb, speaking, used_radios, alt_name)
 	if(message_mode == "intercom")
-		for(var/obj/item/radio/intercom/I in view(1, null))
-			I.talk_into(src, message, verb, speaking)
-			used_radios += I
+		for(var/obj/item/radio/I in view(1, null))
+			if(I.intercom_handling)
+				I.talk_into(src, message, verb, speaking)
+				used_radios += I
 	return 0
 
 /mob/living/proc/handle_speech_sound()
@@ -152,7 +175,7 @@ var/global/list/channel_to_radio_key = new
 
 	return html_encode(message)
 
-/mob/living/say(var/message, var/decl/language/speaking = null, var/verb="says", var/alt_name="", whispering)
+/mob/living/say(var/message, var/decl/language/speaking, var/verb = "says", var/alt_name = "", whispering)
 	set waitfor = FALSE
 	if(client)
 		if(client.prefs.muted & MUTE_IC)
@@ -186,7 +209,11 @@ var/global/list/channel_to_radio_key = new
 		if(speaking)
 			message = copytext_char(message,2+length_char(speaking.key))
 		else
-			speaking = get_default_language()
+			speaking = get_any_good_language(set_default=TRUE)
+			if (!speaking)
+				to_chat(src, SPAN_WARNING("You don't know a language and cannot speak."))
+				emote("custom", AUDIBLE_MESSAGE, "[pick("grunts", "babbles", "gibbers", "jabbers", "burbles")] aimlessly.")
+				return
 
 	// This is broadcast to all mobs with the language,
 	// irrespective of distance or anything else.

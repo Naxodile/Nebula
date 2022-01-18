@@ -70,7 +70,7 @@
 	if(href_list["PRG_newchannel"])
 		. = 1
 		var/mob/living/user = usr
-		var/channel_title = sanitizeSafe(input(user,"Enter channel name or leave blank to cancel:"), 64)
+		var/channel_title = sanitize_safe(input(user,"Enter channel name or leave blank to cancel:"), 64)
 		if(!channel_title)
 			return
 		var/datum/chat_conversation/C = new/datum/chat_conversation(network)
@@ -187,7 +187,7 @@
 	name = "Intranet Relay Chat Client"
 
 /datum/nano_module/program/computer_chatclient/ui_interact(mob/user, ui_key = "main", var/datum/nanoui/ui = null, var/force_open = 1, var/datum/topic_state/state = global.default_topic_state)
-	var/datum/computer_network/network = program.computer.get_network()
+	var/datum/computer_network/network = program?.computer?.get_network()
 	if(!network || !network.chat_channels)
 		return
 

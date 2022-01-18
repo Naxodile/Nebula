@@ -10,6 +10,12 @@
 	var/skipeyes = 0
 	var/skipface = 0
 
+	if(user.zone_sel)
+		if(BP_TAIL in species.has_limbs)
+			user.zone_sel.icon_state = "zone_sel_tail"
+		else
+			user.zone_sel.icon_state = "zone_sel"
+
 	//exosuits and helmets obscure our view and stuff.
 	if(wear_suit)
 		skipgloves = wear_suit.flags_inv & HIDEGLOVES
@@ -342,11 +348,6 @@
 
 	if(print_flavor_text()) msg += "[print_flavor_text()]\n"
 
-	if(mind && user.mind && name == real_name)
-		var/list/relations = matchmaker.get_relationships_between(user.mind, mind, TRUE)
-		if(length(relations))
-			msg += "<br><span class='notice'>You know them. <a href='byond://?src=\ref[src];show_relations=1'>More...</a></span><br>"
-
 	msg += "*---------*</span><br>"
 	msg += applying_pressure
 
@@ -358,6 +359,14 @@
 	var/show_descs = show_descriptors_to(user)
 	if(show_descs)
 		msg += "<span class='notice'>[jointext(show_descs, "<br>")]</span>"
+
+	var/list/human_examines = decls_repository.get_decls_of_subtype(/decl/human_examination)
+	for(var/exam in human_examines)
+		var/decl/human_examination/HE = human_examines[exam]
+		var/adding_text = HE.do_examine(user, distance, src)
+		if(adding_text)
+			msg += adding_text
+
 	to_chat(user, jointext(msg, null))
 
 //Helper procedure. Called by /mob/living/carbon/human/examine() and /mob/living/carbon/human/Topic() to determine HUD access to security and medical records.

@@ -10,6 +10,8 @@
 // See /mob/living/carbon/human for this one.
 /mob/proc/get_organ(var/zone)
 	return
+/mob/proc/get_organs()
+	return
 // End grab casting stubs.
 /mob/proc/get_internal_organ(var/organ_tag)
 	return
@@ -37,7 +39,7 @@
 /mob/proc/handle_grabs_after_move()
 	set waitfor = FALSE
 
-/mob/proc/add_grab(var/obj/item/grab/grab)
+/mob/proc/add_grab(var/obj/item/grab/grab, var/defer_hand = FALSE)
 	return FALSE
 
 /mob/proc/ProcessGrabs()
@@ -49,4 +51,4 @@
 		. += grab
 
 /mob/get_object_size()
-	return mob_size	
+	return mob_size

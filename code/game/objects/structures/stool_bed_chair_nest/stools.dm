@@ -43,16 +43,15 @@
 	// Prep icon.
 	icon_state = ""
 	// Base icon.
-	var/list/noverlays = list()
 	var/image/I = image(icon, "[base_icon]_base")
 	I.color = material.color
-	noverlays |= I
+	var/list/noverlays = list(I)
 	// Padding overlay.
 	if(padding_material)
 		I =  image(icon, "[base_icon]_padding")
 		I.color = padding_material.color
 		noverlays += I
-	overlays = noverlays
+	set_overlays(noverlays)
 	// Strings.
 	if(padding_material)
 		SetName("[padding_material.solid_name] [initial(name)]") //this is not perfect but it will do for now.
@@ -121,7 +120,7 @@
 			to_chat(user, "You cannot pad \the [src] with that.")
 			return
 		C.use(1)
-		if(!istype(src.loc, /turf))
+		if(!isturf(src.loc))
 			user.drop_from_inventory(src)
 			src.dropInto(loc)
 		to_chat(user, "You add padding to \the [src].")

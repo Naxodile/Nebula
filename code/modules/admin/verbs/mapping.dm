@@ -30,8 +30,9 @@ var/global/intercom_range_display_status = 0
 
 /obj/effect/debugging/camera_range/Initialize()
 	. = ..()
-	src.pixel_x = -224
-	src.pixel_y = -224
+	default_pixel_x = -224
+	default_pixel_y = -224
+	reset_offsets(0)
 
 /obj/effect/debugging/marker
 	icon = 'icons/turf/areas.dmi'
@@ -78,14 +79,16 @@ var/global/intercom_range_display_status = 0
 <B>The following annomalities have been detected. The ones in red need immediate attention: Some of those in black may be intentional.</B><BR><ul>"}
 
 	for(var/obj/machinery/camera/C1 in CL)
+		var/area/C1_area = get_area(C1)
 		for(var/obj/machinery/camera/C2 in CL)
+			var/area/C2_area = get_area(C2)
 			if(C1 != C2)
 				if(C1.c_tag == C2.c_tag)
-					output += "<li><font color='red'>c_tag match for sec. cameras at \[[C1.x], [C1.y], [C1.z]\] ([C1.loc.loc]) and \[[C2.x], [C2.y], [C2.z]\] ([C2.loc.loc]) - c_tag is [C1.c_tag]</font></li>"
+					output += "<li><font color='red'>c_tag match for sec. cameras at \[[C1.x], [C1.y], [C1.z]\] ([C1_area]) and \[[C2.x], [C2.y], [C2.z]\] ([C2_area]) - c_tag is [C1.c_tag]</font></li>"
 				if(C1.loc == C2.loc && C1.dir == C2.dir && C1.pixel_x == C2.pixel_x && C1.pixel_y == C2.pixel_y)
-					output += "<li><font color='red'>FULLY overlapping sec. cameras at \[[C1.x], [C1.y], [C1.z]\] ([C1.loc.loc]) Networks: [C1.network] and [C2.network]</font></li>"
+					output += "<li><font color='red'>FULLY overlapping sec. cameras at \[[C1.x], [C1.y], [C1.z]\] ([C1_area]) Channels: [C1.preset_channels] and [C2.preset_channels]</font></li>"
 				if(C1.loc == C2.loc)
-					output += "<li>overlapping sec. cameras at \[[C1.x], [C1.y], [C1.z]\] ([C1.loc.loc]) Networks: [C1.network] and [C2.network]</font></li>"
+					output += "<li>overlapping sec. cameras at \[[C1.x], [C1.y], [C1.z]\] ([C1_area]) Channels: [C1.preset_channels] and [C2.preset_channels]</font></li>"
 		var/turf/T = get_step(C1,turn(C1.dir,180))
 		if(!T || !isturf(T) || !T.density )
 			if(!(locate(/obj/structure/grille,T)))
@@ -95,7 +98,7 @@ var/global/intercom_range_display_status = 0
 						window_check = 1
 						break
 				if(!window_check)
-					output += "<li><font color='red'>Camera not connected to wall at \[[C1.x], [C1.y], [C1.z]\] ([C1.loc.loc]) Network: [C1.network]</color></li>"
+					output += "<li><font color='red'>Camera not connected to wall at \[[C1.x], [C1.y], [C1.z]\] ([C1_area]) Channels: [C1.preset_channels]</color></li>"
 
 	output += "</ul>"
 	show_browser(usr, output, "window=airreport;size=1000x500")
@@ -114,44 +117,46 @@ var/global/intercom_range_display_status = 0
 		qdel(M)
 
 	if(intercom_range_display_status)
-		for(var/obj/item/radio/intercom/I in world)
+		for(var/obj/item/radio/intercom/I in SSmachines.machinery)
 			for(var/turf/T in orange(7,I))
 				var/obj/effect/debugging/marker/F = new/obj/effect/debugging/marker(T)
 				if (!(F in view(7,I.loc)))
 					qdel(F)
+
 	SSstatistics.add_field_details("admin_verb","mIRD") //If you are copy-pasting this, ensure the 2nd parameter is unique to the new proc!
 
 var/global/list/debug_verbs = list (
-		/client/proc/do_not_use_these
-		,/client/proc/camera_view
-		,/client/proc/sec_camera_report
-		,/client/proc/intercom_view
-		,/client/proc/Cell
-		,/client/proc/powerdebug
-		,/client/proc/count_objects_on_z_level
-		,/client/proc/count_objects_all
-		,/client/proc/cmd_assume_direct_control
-		,/client/proc/startSinglo
-		,/client/proc/ticklag
-		,/client/proc/cmd_admin_grantfullaccess
-		,/client/proc/cmd_admin_areatest
-		,/client/proc/cmd_admin_rejuvenate
-		,/datum/admins/proc/show_special_roles
-		,/client/proc/print_jobban_old
-		,/client/proc/print_jobban_old_filter
-		,/client/proc/forceEvent
-		,/client/proc/Zone_Info
-		,/client/proc/Test_ZAS_Connection
-		,/client/proc/rebootAirMaster
-		,/client/proc/hide_debug_verbs
-		,/client/proc/testZAScolors
-		,/client/proc/testZAScolors_remove
-		,/datum/admins/proc/setup_supermatter
-		,/client/proc/atmos_toggle_debug
-		,/client/proc/spawn_tanktransferbomb
-		,/client/proc/find_leaky_pipes
-		,/client/proc/analyze_openturf
-		,/client/proc/show_cargo_prices
+		/client/proc/do_not_use_these,
+		/client/proc/camera_view,
+		/client/proc/sec_camera_report,
+		/client/proc/intercom_view,
+		/client/proc/Cell,
+		/client/proc/powerdebug,
+		/client/proc/count_objects_on_z_level,
+		/client/proc/count_objects_all,
+		/client/proc/cmd_assume_direct_control,
+		/client/proc/startSinglo,
+		/client/proc/ticklag,
+		/client/proc/cmd_admin_grantfullaccess,
+		/client/proc/cmd_admin_areatest,
+		/client/proc/cmd_admin_rejuvenate,
+		/datum/admins/proc/show_special_roles,
+		/client/proc/print_jobban_old,
+		/client/proc/print_jobban_old_filter,
+		/client/proc/forceEvent,
+		/client/proc/Zone_Info,
+		/client/proc/Test_ZAS_Connection,
+		/client/proc/rebootAirMaster,
+		/client/proc/hide_debug_verbs,
+		/client/proc/testZAScolors,
+		/client/proc/testZAScolors_remove,
+		/datum/admins/proc/setup_supermatter,
+		/datum/admins/proc/setup_fusion,
+		/client/proc/atmos_toggle_debug,
+		/client/proc/spawn_tanktransferbomb,
+		/client/proc/find_leaky_pipes,
+		/client/proc/analyze_openturf,
+		/client/proc/show_cargo_prices
 	)
 
 

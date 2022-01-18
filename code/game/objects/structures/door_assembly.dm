@@ -15,7 +15,7 @@
 	var/panel_icon = 'icons/obj/doors/station/panel.dmi'
 	var/fill_icon = 'icons/obj/doors/station/fill_steel.dmi'
 	var/glass_icon = 'icons/obj/doors/station/fill_glass.dmi'
-	var/paintable = AIRLOCK_PAINTABLE|AIRLOCK_STRIPABLE
+	var/paintable = PAINT_PAINTABLE|PAINT_STRIPABLE
 	var/door_color = "none"
 	var/stripe_color = "none"
 	var/symbol_color = "none"
@@ -85,7 +85,8 @@
 	glass = -1
 	paintable = 0
 
-/obj/structure/door_assembly/blast/on_update_icon()	
+/obj/structure/door_assembly/blast/on_update_icon()
+	return
 
 /obj/structure/door_assembly/blast/morgue
 	name = "morgue door assembly"
@@ -96,13 +97,13 @@
 /obj/structure/door_assembly/blast/shutter
 	name = "shutter assembly"
 	icon = 'icons/obj/doors/rapid_pdoor.dmi'
-	icon_state = "pdoor1"
+	icon_state = "shutter1"
 	airlock_type = /obj/machinery/door/blast/shutters
 
 /obj/structure/door_assembly/attackby(obj/item/W, mob/user)
 
 	if(istype(W, /obj/item/pen))
-		var/t = sanitizeSafe(input(user, "Enter the name for the door.", src.name, src.created_name), MAX_NAME_LEN)
+		var/t = sanitize_safe(input(user, "Enter the name for the door.", src.name, src.created_name), MAX_NAME_LEN)
 		if(!t)	return
 		if(!in_range(src, usr) && src.loc != usr)	return
 		created_name = t
@@ -213,7 +214,7 @@
 
 	else if(istype(W, /obj/item/stack/material) && !glass)
 		var/obj/item/stack/material/S = W
-		var/material_name = S.get_material_type()		
+		var/material_name = S.get_material_type()
 		if (S.get_amount() >= 2)
 			playsound(src.loc, 'sound/items/Crowbar.ogg', 100, 1)
 			user.visible_message("[user] adds [S.name] to the airlock assembly.", "You start to install [S.name] into the airlock assembly.")
@@ -239,7 +240,7 @@
 		..()
 
 /obj/structure/door_assembly/on_update_icon()
-	overlays.Cut()
+	..()
 	var/image/filling_overlay
 	var/image/panel_overlay
 	var/final_name = ""
@@ -259,5 +260,5 @@
 			panel_overlay = image(panel_icon, "construction1")
 	final_name += "[glass == 1 ? "Window " : ""][istext(glass) ? "[glass] Airlock" : base_name] Assembly"
 	SetName(final_name)
-	overlays += filling_overlay
-	overlays += panel_overlay
+	add_overlay(filling_overlay)
+	add_overlay(panel_overlay)

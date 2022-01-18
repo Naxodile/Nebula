@@ -6,28 +6,30 @@
 	default_action_type = /datum/action/item_action/organ
 	material = /decl/material/solid/meat
 	origin_tech = "{'materials':1,'biotech':1}"
+	throwforce = 2
 
 	// Strings.
-	var/organ_tag = "organ"           // Unique identifier.
-	var/parent_organ = BP_CHEST       // Organ holding this object.
+	var/organ_tag = "organ"                // Unique identifier.
+	var/parent_organ = BP_CHEST            // Organ holding this object.
 
 	// Status tracking.
-	var/status = 0                    // Various status flags (such as robotic)
-	var/vital                         // Lose a vital limb, die immediately.
+	var/status = 0                         // Various status flags (such as robotic)
+	var/vital                              // Lose a vital limb, die immediately.
 
 	// Reference data.
-	var/mob/living/carbon/human/owner // Current mob owning the organ.
-	var/datum/dna/dna                 // Original DNA.
-	var/decl/species/species          // Original species.
-	var/decl/bodytype/bodytype        // Original bodytype.
-	var/list/ailments                 // Current active ailments if any.
+	var/mob/living/carbon/human/owner      // Current mob owning the organ.
+	var/datum/dna/dna                      // Original DNA.
+	var/decl/species/species               // Original species.
+	var/decl/bodytype/bodytype             // Original bodytype.
+	var/list/ailments                      // Current active ailments if any.
 
 	// Damage vars.
-	var/damage = 0                    // Current damage to the organ
-	var/min_broken_damage = 30        // Damage before becoming broken
-	var/max_damage = 30               // Damage cap
-	var/rejecting                     // Is this organ already being rejected?
-	var/death_time
+	var/damage = 0                         // Current damage to the organ
+	var/min_broken_damage = 30             // Damage before becoming broken
+	var/max_damage = 30                    // Damage cap
+	var/rejecting                          // Is this organ already being rejected?
+	var/death_time                         // world.time at moment of death.
+	var/scale_max_damage_to_species_health // Whether or not we should scale the damage values of this organ to the owner species.
 
 /obj/item/organ/Destroy()
 	owner = null
@@ -53,13 +55,12 @@
 	if(!istype(given_dna))
 		given_dna = null
 
-	if(max_damage)
-		min_broken_damage = Floor(max_damage / 2)
-	else
-		max_damage = min_broken_damage * 2
-
 	if(iscarbon(loc))
 		owner = loc
+		if(owner && QDELETED(owner))
+			owner = null
+			return INITIALIZE_HINT_QDEL
+
 		if(!given_dna && owner.dna)
 			given_dna = owner.dna
 		else
@@ -69,6 +70,15 @@
 		set_dna(given_dna)
 	if (!species)
 		species = get_species_by_key(global.using_map.default_species)
+
+	// Adjust limb health proportinate to total species health.
+	var/total_health_coefficient = scale_max_damage_to_species_health ? (species.total_health / DEFAULT_SPECIES_HEALTH) : 1
+	if(max_damage)
+		max_damage = max(1, FLOOR(max_damage * total_health_coefficient))
+		min_broken_damage = max(1, FLOOR(max_damage * 0.5))
+	else
+		min_broken_damage = max(1, FLOOR(min_broken_damage * total_health_coefficient))
+		max_damage = max(1, FLOOR(min_broken_damage * 2))
 
 	species.resize_organ(src)
 	bodytype = owner?.bodytype || species.default_bodytype
@@ -136,25 +146,21 @@
 
 	if(owner && length(ailments))
 		for(var/datum/ailment/ailment in ailments)
-			if(!ailment.treated_by_reagent_type)
-				continue
-			var/treated
-			var/datum/reagents/bloodstr_reagents = owner.get_injected_reagents()
-			if(bloodstr_reagents)
-				if(REAGENT_VOLUME(bloodstr_reagents, ailment.treated_by_reagent_type) >= ailment.treated_by_reagent_dosage)
-					treated = bloodstr_reagents
-				else if(REAGENT_VOLUME(owner.reagents, ailment.treated_by_reagent_type) >= ailment.treated_by_reagent_dosage)
-					treated = owner.reagents
-				else
-					var/datum/reagents/ingested = owner.get_ingested_reagents()
-					if(ingested && REAGENT_VOLUME(ingested, ailment.treated_by_reagent_type) >= ailment.treated_by_reagent_dosage)
-						treated = ingested
-			if(treated)
-				ailment.was_treated_by_medication(treated)
+			handle_ailment(ailment)
 
 	//check if we've hit max_damage
 	if(damage >= max_damage)
 		die()
+
+/obj/item/organ/proc/handle_ailment(var/datum/ailment/ailment)
+	if(ailment.treated_by_reagent_type)
+		for(var/datum/reagents/source in list(owner.get_injected_reagents(), owner.reagents, owner.get_ingested_reagents()))
+			for(var/reagent_type in source.reagent_volumes)
+				if(ailment.treated_by_medication(source.reagent_volumes[reagent_type]))
+					ailment.was_treated_by_medication(source, reagent_type)
+					return
+	if(ailment.treated_by_chem_effect && owner.has_chemical_effect(ailment.treated_by_chem_effect, ailment.treated_by_chem_effect_strength))
+		ailment.was_treated_by_chem_effect()
 
 /obj/item/organ/proc/is_preserved()
 	if(istype(loc,/obj/item/organ))
@@ -209,7 +215,7 @@
 		return
 	if(dna)
 		if(!rejecting)
-			if(owner.blood_incompatible(dna.b_type, species))
+			if(owner.blood_incompatible(dna.b_type))
 				rejecting = 1
 		else
 			rejecting++ //Rejection severity increases over time.
@@ -223,7 +229,11 @@
 						germ_level += rand(2,3)
 					if(501 to INFINITY)
 						germ_level += rand(3,5)
-						owner.reagents.add_reagent(/decl/material/liquid/coagulated_blood, rand(1,2))
+						var/decl/blood_type/blood_decl = dna?.b_type && get_blood_type_by_name(dna.b_type)
+						if(istype(blood_decl))
+							owner.reagents.add_reagent(blood_decl.transfusion_fail_reagent, round(rand(2,4) * blood_decl.transfusion_fail_percentage))
+						else
+							owner.reagents.add_reagent(/decl/material/liquid/coagulated_blood, rand(1,2))
 
 /obj/item/organ/proc/receive_chem(chemical)
 	return 0
@@ -234,12 +244,10 @@
 /obj/item/organ/proc/rejuvenate(var/ignore_prosthetic_prefs)
 	damage = 0
 	status = initial(status)
-	if(!ignore_prosthetic_prefs && owner && owner.client && owner.client.prefs && owner.client.prefs.real_name == owner.real_name)
-		var/status = owner.client.prefs.organ_data[organ_tag]
-		if(status == "assisted")
-			mechassist()
-		else if(status == "mechanical")
-			robotize()
+	if(ignore_prosthetic_prefs && ishuman(owner) && owner.client && owner.client.prefs && owner.client.prefs.real_name == owner.real_name)
+		for(var/decl/aspect/aspect as anything in owner.personal_aspects)
+			if(aspect.applies_to_organ(organ_tag))
+				aspect.apply(owner)
 	if(species)
 		species.post_organ_rejuvenate(src, owner)
 
@@ -339,7 +347,7 @@
 	if(!user.unEquip(src))
 		return
 
-	var/obj/item/chems/food/snacks/organ/O = new(get_turf(src))
+	var/obj/item/chems/food/organ/O = new(get_turf(src))
 	O.SetName(name)
 	O.appearance = src
 	if(reagents && reagents.total_volume)
@@ -471,3 +479,10 @@ var/global/list/ailment_reference_cache = list()
 				LAZYREMOVE(ailments, ext_ailment)
 				return TRUE
 	return FALSE
+
+/obj/item/organ/proc/has_diagnosable_ailments(var/mob/user, var/scanner = FALSE)
+	for(var/datum/ailment/ailment in ailments)
+		if(ailment.manual_diagnosis_string && !scanner)
+			LAZYADD(., ailment.replace_tokens(message = ailment.manual_diagnosis_string, user = user))
+		else if(ailment.scanner_diagnosis_string && scanner)
+			LAZYADD(., ailment.replace_tokens(message = ailment.scanner_diagnosis_string, user = user))

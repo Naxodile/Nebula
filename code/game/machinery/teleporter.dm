@@ -1,5 +1,5 @@
 /obj/machinery/computer/teleporter
-	name = "Teleporter Control Console"
+	name = "teleporter control console"
 	desc = "Used to control a linked teleportation hub and station."
 	icon_keyboard = "teleport_key"
 	icon_screen = "teleport"
@@ -46,51 +46,34 @@
 	. = ..()
 	if(locked)
 		var/turf/T = get_turf(locked)
-		to_chat(user, "<span class='notice'>The console is locked on to \[[T.loc.name]\].</span>")
+		to_chat(user, SPAN_NOTICE("The console is locked on to \[[T.loc.name]\]."))
 
 
 /obj/machinery/computer/teleporter/attackby(var/obj/I, var/mob/user)
-	if(istype(I, /obj/item/card/data/))
+	if(istype(I, /obj/item/card/data))
 		var/obj/item/card/data/C = I
 		if(stat & (NOPOWER|BROKEN) & (C.function != "teleporter"))
 			attack_hand(user)
 
 		var/obj/L = null
 
-		for(var/obj/effect/landmark/sloc in landmarks_list)
-			if(sloc.name != C.data) continue
-			if(locate(/mob/living) in sloc.loc) continue
+		for(var/obj/abstract/landmark/sloc in global.landmarks_list)
+			if(sloc.name != C.data || (locate(/mob/living) in sloc.loc))
+				continue
 			L = sloc
 			break
 
 		if(!L)
 			L = locate("landmark*[C.data]") // use old stype
 
-
-		if(istype(L, /obj/effect/landmark/) && istype(L.loc, /turf))
-			if(!user.unEquip(I))
-				return
+		if(istype(L, /obj/abstract/landmark) && isturf(L.loc) && user.unEquip(I))
 			to_chat(usr, "You insert the coordinates into the machine.")
 			to_chat(usr, "A message flashes across the screen reminding the traveller that the nuclear authentication disk is to remain on the [station_name()] at all times.")
 			qdel(I)
-
-			if(C.data == "Clown Land")
-				//whoops
-				for(var/mob/O in hearers(src, null))
-					O.show_message("<span class='warning'>Incoming wormhole detected, unable to lock in.</span>", 2)
-
-				for(var/obj/machinery/teleport/hub/H in range(1))
-					var/amount = rand(2,5)
-					for(var/i=0;i<amount;i++)
-						new /mob/living/simple_animal/hostile/carp(get_turf(H))
-				//
-			else
-				for(var/mob/O in hearers(src, null))
-					O.show_message("<span class='notice'>Locked in.</span>", 2)
-				src.locked = L
-				one_time_use = 1
-
-			src.add_fingerprint(usr)
+			audible_message(SPAN_NOTICE("Locked in."))
+			src.locked = L
+			one_time_use = 1
+			add_fingerprint(usr)
 	else
 		..()
 
@@ -105,7 +88,7 @@
 	var/list/areaindex = list()
 
 	. = TRUE
-	for(var/obj/item/radio/beacon/R in world)
+	for(var/obj/item/radio/beacon/R in global.radio_beacons)
 		if(!R.functioning)
 			continue
 		var/turf/T = get_turf(R)
@@ -120,7 +103,7 @@
 			areaindex[tmpname] = 1
 		L[tmpname] = R
 
-	for (var/obj/item/implant/tracking/I in world)
+	for (var/obj/item/implant/tracking/I in global.tracking_implants)
 		if (!I.implanted || !ismob(I.loc))
 			continue
 		else
@@ -146,8 +129,7 @@
 	if(!CanInteract(user, DefaultTopicState()))
 		return FALSE
 	set_target(L[desc])
-	for(var/mob/O in hearers(src, null))
-		O.show_message("<span class='notice'>Locked In</span>", 2)
+	audible_message(SPAN_NOTICE("Locked in."))
 	return
 
 /obj/machinery/computer/teleporter/verb/set_id(t as text)
@@ -163,7 +145,7 @@
 	return
 
 /obj/machinery/computer/teleporter/proc/target_lost()
-	audible_message("<span class='warning'>Connection with locked in coordinates has been lost.</span>")
+	audible_message(SPAN_WARNING("Connection with locked in coordinates has been lost."))
 	clear_target()
 
 /obj/machinery/computer/teleporter/proc/clear_target()
@@ -186,7 +168,7 @@
 /proc/find_loc(obj/R)
 	if (!R)	return null
 	var/turf/T = R.loc
-	while(!istype(T, /turf))
+	while(!isturf(T))
 		T = T.loc
 		if(!T || istype(T, /area))	return null
 	return T
@@ -198,15 +180,14 @@
 	anchored = 1.0
 	var/lockeddown = 0
 
-
 /obj/machinery/teleport/hub
 	name = "teleporter pad"
 	desc = "The teleporter pad handles all of the impossibly complex busywork required in instant matter transmission."
 	icon_state = "pad"
 	idle_power_usage = 10
 	active_power_usage = 2000
-	var/obj/machinery/computer/teleporter/com
 	light_color = "#02d1c7"
+	var/obj/machinery/computer/teleporter/com
 
 /obj/machinery/teleport/hub/Initialize()
 	..()
@@ -220,11 +201,15 @@
 	cut_overlays()
 	if (com?.station?.engaged)
 		add_overlay(emissive_overlay(icon, "[initial(icon_state)]_active_overlay"))
+		z_flags |= ZMM_MANGLE_PLANES
 		set_light(4, 0.4)
 	else
 		set_light(0)
 		if(operable())
 			add_overlay(emissive_overlay(icon, "[initial(icon_state)]_idle_overlay"))
+			z_flags |= ZMM_MANGLE_PLANES
+		else
+			z_flags &= ~ZMM_MANGLE_PLANES
 
 /obj/machinery/teleport/hub/Bumped(var/atom/movable/M)
 	if (com?.station?.engaged)

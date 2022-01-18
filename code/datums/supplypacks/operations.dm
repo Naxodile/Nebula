@@ -19,7 +19,7 @@
 					/obj/item/storage/pill_bottle/zoom,
 					/obj/item/storage/pill_bottle/happy,
 					/obj/item/storage/pill_bottle/gleam,
-					/obj/item/chems/food/drinks/bottle/pwine)
+					/obj/item/chems/drinks/bottle/pwine)
 
 	name = "UNLISTED - Contraband crate"
 	containername = "unlabeled crate"
@@ -90,7 +90,7 @@
 					 /obj/item/folder/red,
 					 /obj/item/folder/yellow,
 					 /obj/item/hand_labeler,
-					 /obj/item/tape_roll,
+					 /obj/item/ducttape,
 					 /obj/structure/filingcabinet/chestdrawer,
 					 /obj/item/paper_bin)
 	name = "Office supplies"

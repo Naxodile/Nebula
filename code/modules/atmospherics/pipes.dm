@@ -2,30 +2,34 @@
 
 /obj/machinery/atmospherics/pipe
 
-	var/datum/gas_mixture/air_temporary // used when reconstructing a pipeline that broke
-	var/datum/pipeline/parent
-	var/volume = 0
-	var/leaking = 0		// Do not set directly, use set_leaking(TRUE/FALSE)
 	use_power = POWER_USE_OFF
-
-	//minimum pressure before check_pressure(...) should be called
-	var/maximum_pressure = 210 * ONE_ATMOSPHERE
-	var/fatigue_pressure = 170 * ONE_ATMOSPHERE
-	var/alert_pressure = 170 * ONE_ATMOSPHERE
+	stat_immune = NOSCREEN | NOINPUT | NOPOWER
+	interact_offline = TRUE //Needs to be set so that pipes don't say they lack power in their description
 
 	can_buckle = 1
 	buckle_require_restraints = 1
 	buckle_lying = -1
-	var/datum/sound_token/sound_token
 	build_icon_state = "simple"
 	build_icon = 'icons/obj/pipe-item.dmi'
 	pipe_class = PIPE_CLASS_BINARY
-	atom_flags = ATOM_FLAG_CAN_BE_PAINTED
+	atom_flags = ATOM_FLAG_CAN_BE_PAINTED | ATOM_FLAG_NO_REACT
 
 	frame_type = /obj/item/pipe
 	uncreated_component_parts = null // No apc connection
 	construct_state = /decl/machine_construction/pipe
 	matter = list()
+
+	var/datum/gas_mixture/air_temporary    // used when reconstructing a pipeline that broke
+	var/datum/reagents/liquid_temporary // used when reconstructing a pipeline that broke
+	var/datum/pipeline/parent
+	var/volume = 0
+	var/leaking = 0		// Do not set directly, use set_leaking(TRUE/FALSE)
+
+	//minimum pressure before check_pressure(...) should be called
+	var/maximum_pressure = 210 * ONE_ATMOSPHERE
+	var/fatigue_pressure = 170 * ONE_ATMOSPHERE
+	var/alert_pressure = 170 * ONE_ATMOSPHERE
+	var/datum/sound_token/sound_token
 
 /obj/machinery/atmospherics/pipe/drain_power()
 	return -1
@@ -110,8 +114,13 @@
 /obj/machinery/atmospherics/pipe/Destroy()
 	QDEL_NULL(parent)
 	QDEL_NULL(sound_token)
-	if(air_temporary)
-		loc.assume_air(air_temporary)
+	if(loc)
+		if(air_temporary)
+			loc.assume_air(air_temporary)
+			air_temporary = null
+		if(liquid_temporary)
+			liquid_temporary.trans_to(loc, liquid_temporary.total_volume)
+			liquid_temporary = null
 	. = ..()
 
 /obj/machinery/atmospherics/pipe/deconstruction_pressure_check()
@@ -166,7 +175,7 @@
 /obj/machinery/atmospherics/pipe/set_color(new_color)
 	..()
 	//for updating connected atmos device pipes (i.e. vents, manifolds, etc)
-	for(var/obj/machinery/atmospherics/node as anything in nodes_to_networks)
+	for(var/obj/machinery/atmospherics/node AS_ANYTHING in nodes_to_networks)
 		node.update_icon()
 
 /obj/machinery/atmospherics/pipe/proc/try_leak()
@@ -219,7 +228,7 @@
 
 /obj/machinery/atmospherics/pipe/simple/check_pressure(pressure)
 	// Don't ask me, it happened somehow.
-	if (!istype(loc, /turf))
+	if (!isturf(loc))
 		return 1
 
 	var/datum/gas_mixture/environment = loc.return_air()
@@ -238,7 +247,7 @@
 
 /obj/machinery/atmospherics/pipe/simple/proc/burst()
 	ASSERT(parent)
-	parent.temporarily_store_air()
+	parent.temporarily_store_fluids()
 	src.visible_message("<span class='danger'>\The [src] bursts!</span>");
 	playsound(src.loc, 'sound/effects/bang.ogg', 25, 1)
 	var/datum/effect/effect/system/smoke_spread/smoke = new
@@ -709,7 +718,7 @@
 /obj/machinery/atmospherics/proc/universal_underlays(var/direction)
 	var/turf/T = loc
 	var/connections = list("", "-supply", "-scrubbers")
-	for(var/obj/machinery/atmospherics/node as anything in nodes_in_dir(direction))
+	for(var/obj/machinery/atmospherics/node AS_ANYTHING in nodes_in_dir(direction))
 		if(node.icon_connect_type in connections)
 			connections[node.icon_connect_type] = node
 	for(var/suffix in connections)

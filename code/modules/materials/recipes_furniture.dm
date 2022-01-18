@@ -15,92 +15,23 @@
 	return modifiers ? jointext(modifiers + ..(), " ") : ..()
 
 /datum/stack_recipe/furniture/chair/padded
-
-#define PADDED_CHAIR(color) /datum/stack_recipe/furniture/chair/padded/##color{\
-	result_type = /obj/structure/bed/chair/padded/##color;\
-	modifiers = list("padded", #color)\
-	}
-PADDED_CHAIR(beige)
-PADDED_CHAIR(black)
-PADDED_CHAIR(brown)
-PADDED_CHAIR(lime)
-PADDED_CHAIR(teal)
-PADDED_CHAIR(red)
-PADDED_CHAIR(purple)
-PADDED_CHAIR(green)
-PADDED_CHAIR(yellow)
-#undef PADDED_CHAIR
+	result_type = /obj/structure/bed/chair/padded
 
 /datum/stack_recipe/furniture/chair/office
 	title = "office chair"
 
 /datum/stack_recipe/furniture/chair/office/display_name()
 	return modifiers ? jointext(modifiers + title, " ") : title // Bypass material
-
-/datum/stack_recipe/furniture/chair/office/light
-	result_type = /obj/structure/bed/chair/office/light
-	modifiers = list("light")
-
-/datum/stack_recipe/furniture/chair/office/dark
-	result_type = /obj/structure/bed/chair/office/dark
-	modifiers = list("dark")
-
-#define COMFY_OFFICE_CHAIR(color) /datum/stack_recipe/furniture/chair/office/comfy/##color{\
-	result_type = /obj/structure/bed/chair/office/comfy/##color;\
-	modifiers = list(#color, "comfy")\
-	}
-COMFY_OFFICE_CHAIR(beige)
-COMFY_OFFICE_CHAIR(black)
-COMFY_OFFICE_CHAIR(brown)
-COMFY_OFFICE_CHAIR(lime)
-COMFY_OFFICE_CHAIR(teal)
-COMFY_OFFICE_CHAIR(red)
-COMFY_OFFICE_CHAIR(purple)
-COMFY_OFFICE_CHAIR(green)
-COMFY_OFFICE_CHAIR(yellow)
-#undef COMFY_OFFICE_CHAIR
-
+/datum/stack_recipe/furniture/chair/office/comfy
+	result_type = /obj/structure/bed/chair/office/comfy
 /datum/stack_recipe/furniture/chair/comfy
-	title = "comfy chair"
-
-#define COMFY_CHAIR(color) /datum/stack_recipe/furniture/chair/comfy/##color{\
-	result_type = /obj/structure/bed/chair/comfy/##color;\
-	modifiers = list(#color)\
-	}
-COMFY_CHAIR(beige)
-COMFY_CHAIR(black)
-COMFY_CHAIR(brown)
-COMFY_CHAIR(lime)
-COMFY_CHAIR(teal)
-COMFY_CHAIR(red)
-COMFY_CHAIR(purple)
-COMFY_CHAIR(green)
-COMFY_CHAIR(yellow)
-#undef COMFY_CHAIR
-
+	result_type = /obj/structure/bed/chair/comfy
 /datum/stack_recipe/furniture/chair/arm
-	title = "armchair"
-
-#define ARMCHAIR(color) /datum/stack_recipe/furniture/chair/arm/##color{\
-	result_type = /obj/structure/bed/chair/armchair/##color;\
-	modifiers = list(#color)\
-	}
-ARMCHAIR(beige)
-ARMCHAIR(black)
-ARMCHAIR(brown)
-ARMCHAIR(lime)
-ARMCHAIR(teal)
-ARMCHAIR(red)
-ARMCHAIR(purple)
-ARMCHAIR(green)
-ARMCHAIR(yellow)
-#undef ARMCHAIR
+	result_type = /obj/structure/bed/chair/armchair
 
 /datum/stack_recipe/furniture/chair/wood
-
 /datum/stack_recipe/furniture/chair/wood/normal
 	result_type = /obj/structure/bed/chair/wood
-
 /datum/stack_recipe/furniture/chair/wood/fancy
 	result_type = /obj/structure/bed/chair/wood/wings
 	modifiers = list("fancy")
@@ -141,12 +72,12 @@ ARMCHAIR(yellow)
 
 /datum/stack_recipe/furniture/table_frame
 	title = "table frame"
-	result_type = /obj/structure/table
+	result_type = /obj/structure/table/frame
 	time = 10
 
 /datum/stack_recipe/furniture/rack
 	title = "rack"
-	result_type = /obj/structure/table/rack
+	result_type = /obj/structure/rack
 
 /datum/stack_recipe/furniture/closet
 	title = "closet"
@@ -169,6 +100,9 @@ ARMCHAIR(yellow)
 	result_type = /obj/machinery/constructable_frame/computerframe
 	req_amount = 5
 	time = 25
+
+/datum/stack_recipe/furniture/computerframe/spawn_result(mob/user, location, amount)
+	return new result_type(location)
 
 /datum/stack_recipe/furniture/ladder
 	title = "ladder"
@@ -193,11 +127,17 @@ ARMCHAIR(yellow)
 	req_amount = 5
 	time = 25
 
+/datum/stack_recipe/furniture/machine/spawn_result(mob/user, location, amount)
+	return new result_type(location)
+
 /datum/stack_recipe/furniture/turret
 	title = "turret frame"
 	result_type = /obj/machinery/porta_turret_construct
 	req_amount = 5
 	time = 25
+
+/datum/stack_recipe/furniture/turret/spawn_result(mob/user, location, amount)
+	return new result_type(location)
 
 /datum/stack_recipe/furniture/door_assembly
 	time = 50
@@ -219,8 +159,14 @@ ARMCHAIR(yellow)
 	result_type = /obj/structure/door_assembly/door_assembly_ext
 
 /datum/stack_recipe/furniture/door_assembly/firedoor
-	title = "emergency shutter"
+	title = "emergency shutter assembly"
 	result_type = /obj/structure/firedoor_assembly
+
+/datum/stack_recipe/furniture/door_assembly/firedoor/border
+	title = "unidirectional emergency shutter assembly"
+	result_type = /obj/structure/firedoor_assembly/border
+	one_per_turf = FALSE
+	time = 10
 
 /datum/stack_recipe/furniture/door_assembly/double
 	title = "double airlock assembly"
@@ -272,6 +218,9 @@ ARMCHAIR(yellow)
 	req_amount = 3
 	time = 10
 
+/datum/stack_recipe/furniture/planting_bed/spawn_result(mob/user, location, amount)
+	return new result_type(location)
+
 /datum/stack_recipe/furniture/fullwindow
 	title = "full-tile window"
 	result_type = /obj/structure/window
@@ -287,7 +236,7 @@ ARMCHAIR(yellow)
 				return FALSE
 
 /datum/stack_recipe/furniture/fullwindow/spawn_result(mob/user, location, amount)
-	return new result_type(user?.loc, SOUTHWEST, 1, use_material, use_reinf_material)
+	return new result_type(user?.loc, use_material, use_reinf_material, SOUTHWEST, TRUE)
 
 /datum/stack_recipe/furniture/borderwindow
 	title = "border window"
@@ -304,7 +253,7 @@ ARMCHAIR(yellow)
 				return FALSE
 
 /datum/stack_recipe/furniture/borderwindow/spawn_result(mob/user, location, amount)
-	return new result_type(user?.loc, user?.dir, 1, use_material, use_reinf_material)
+	return new result_type(user?.loc, use_material, use_reinf_material, user?.dir, TRUE)
 
 /datum/stack_recipe/furniture/windoor
 	title = "windoor assembly"

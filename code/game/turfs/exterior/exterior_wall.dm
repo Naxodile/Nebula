@@ -53,6 +53,10 @@ var/global/list/natural_walls = list()
 	..()
 	update_material(!ml)
 	spread_deposit()
+	if(floor_type && HasAbove(z))
+		var/turf/T = GetAbove(src)
+		if(!istype(T, floor_type) && T.is_open())
+			T.ChangeTurf(floor_type, keep_air = TRUE)
 
 /turf/exterior/wall/explosion_act(severity)
 	if(severity == 1 || (severity == 2 && prob(40)))
@@ -137,11 +141,6 @@ var/global/list/natural_walls = list()
 		explosion_resistance = reinf_material.explosion_resistance
 	update_strings()
 	set_opacity(material.opacity >= 0.5)
-	if(update_neighbors)
-		for(var/turf/exterior/T in RANGE_TURFS(src, 1))
-			T.update_icon()
-	else
-		update_icon()
 	if(reinf_material?.ore_icon_overlay)
 		ore_overlay = image('icons/turf/mining_decals.dmi', "[reinf_material.ore_icon_overlay]")
 		ore_overlay.appearance_flags = RESET_COLOR
@@ -156,6 +155,11 @@ var/global/list/natural_walls = list()
 		ore_overlay.layer = DECAL_LAYER
 		if(M)
 			ore_overlay.transform = M
+	if(update_neighbors)
+		for(var/turf/exterior/T in RANGE_TURFS(src, 1))
+			T.update_icon()
+	else
+		update_icon()
 
 /turf/exterior/wall/on_update_icon()
 
@@ -183,11 +187,11 @@ var/global/list/natural_walls = list()
 	var/image/I
 	for(var/i = 1 to 4)
 		var/apply_state = "[wall_connections[i]]"
-		I = image(material_icon_base, apply_state, dir = 1<<(i-1))
+		I = image(material_icon_base, apply_state, dir = BITFLAG(i-1))
 		I.color = base_color
 		add_overlay(I)
 		if(shine)
-			I = image(material_icon_base, "shine[wall_connections[i]]", dir = 1<<(i-1))
+			I = image(material_icon_base, "shine[wall_connections[i]]", dir = BITFLAG(i-1))
 			I.appearance_flags |= RESET_ALPHA
 			I.alpha = shine
 			add_overlay(I)

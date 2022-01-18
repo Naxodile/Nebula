@@ -41,7 +41,7 @@
 	name = "[reinf_material ? "reinforced " : ""][material.solid_name] window"
 	desc = "A window pane made from [material.solid_name]."
 
-/obj/structure/window/Initialize(var/ml, var/dir_to_set, var/anchored, var/_mat, var/_reinf_mat)
+/obj/structure/window/Initialize(var/ml, var/_mat, var/_reinf_mat, var/dir_to_set, var/anchored)
 	. = ..(ml, _mat, _reinf_mat)
 	if(!istype(material))
 		. = INITIALIZE_HINT_QDEL
@@ -70,8 +70,10 @@
 	update_nearby_tiles()
 	var/turf/location = loc
 	. = ..()
-	for(var/obj/structure/window/W in orange(location, 1))
-		W.update_icon()
+	if(istype(location) && location != loc)
+		for(var/obj/structure/S in orange(location, 1))
+			S.update_connections()
+			S.update_icon()
 
 /obj/structure/window/CanFluidPass(var/coming_from)
 	return (!is_fulltile() && coming_from != dir)
@@ -221,20 +223,40 @@
 			playsound(src.loc, 'sound/items/Ratchet.ogg', 75, 1)
 			visible_message(SPAN_NOTICE("[user] dismantles \the [src]."))
 			dismantle()
-	else if(isCoil(W) && !polarized && is_fulltile())
+	else if(isCoil(W) && is_fulltile())
+		if (polarized)
+			to_chat(user, SPAN_WARNING("\The [src] is already polarized."))
+			return
 		var/obj/item/stack/cable_coil/C = W
 		if (C.use(1))
 			playsound(src.loc, 'sound/effects/sparks1.ogg', 75, 1)
 			polarized = TRUE
-	else if(polarized && isMultitool(W))
-		var/t = sanitizeSafe(input(user, "Enter the ID for the window.", src.name, null), MAX_NAME_LEN)
-		if(user.incapacitated() || !user.Adjacent(src))
+			to_chat(user, SPAN_NOTICE("You wire and polarize \the [src]."))
+	else if (isWirecutter(W))
+		if (!polarized)
+			to_chat(user, SPAN_WARNING("\The [src] is not polarized."))
 			return
-		if (user.get_active_hand() != W)
+		new /obj/item/stack/cable_coil(get_turf(user), 1)
+		if (opacity)
+			toggle()
+		polarized = FALSE
+		id = null
+		playsound(loc, 'sound/items/Wirecutter.ogg', 75, 1)
+		to_chat(user, SPAN_NOTICE("You cut the wiring and remove the polarization from \the [src]."))
+	else if(isMultitool(W))
+		if (!polarized)
+			to_chat(user, SPAN_WARNING("\The [src] is not polarized."))
 			return
-		if (t)
-			src.id = t
-			to_chat(user, SPAN_NOTICE("The new ID of the window is [id]"))
+		if (anchored)
+			playsound(loc, 'sound/effects/pop.ogg', 75, 1)
+			to_chat(user, SPAN_NOTICE("You toggle \the [src]'s tinting."))
+			toggle()
+		else
+			var/response = input(user, "New Window ID:", name, id) as null | text
+			if (isnull(response) || user.incapacitated() || !user.Adjacent(src) || user.get_active_hand() != W)
+				return
+			id = sanitize_safe(response, MAX_NAME_LEN)
+			to_chat(user, SPAN_NOTICE("The new ID of \the [src] is [id]."))
 		return
 	else if(istype(W, /obj/item/gun/energy/plasmacutter) && anchored)
 		var/obj/item/gun/energy/plasmacutter/cutter = W
@@ -260,12 +282,15 @@
 		..()
 	return
 
+// TODO: generalize to matter list and parts_type.
 /obj/structure/window/create_dismantled_products(turf/T)
-	var/obj/item/stack/material/S = material.create_object(loc, is_fulltile() ? 4 : 2)
-	if(istype(S) && reinf_material)
-		S.reinf_material = reinf_material
-		S.update_strings()
-		S.update_icon()
+	SHOULD_CALL_PARENT(FALSE)
+	var/list/products = material.create_object(loc, is_fulltile() ? 4 : 2)
+	if(reinf_material)
+		for(var/obj/item/stack/material/S in products)
+			S.reinf_material = reinf_material
+			S.update_strings()
+			S.update_icon()
 
 /obj/structure/window/grab_attack(var/obj/item/grab/G)
 	if (G.assailant.a_intent != I_HURT)
@@ -308,6 +333,14 @@
 	set_dir(turn(dir, 90))
 	update_nearby_tiles(need_rebuild=1)
 
+/obj/structure/window/update_nearby_tiles(need_rebuild)
+	. = ..()
+	for(var/obj/structure/S in orange(loc, 1))
+		if(S == src)
+			continue
+		S.update_connections()
+		S.update_icon()
+
 /obj/structure/window/Move()
 	var/ini_dir = dir
 	update_nearby_tiles(need_rebuild=1)
@@ -326,8 +359,25 @@
 	if(reinf_material)
 		to_chat(user, SPAN_NOTICE("It is reinforced with the [reinf_material.solid_name] lattice."))
 
+	if (reinf_material)
+		switch (construction_state)
+			if (0)
+				to_chat(user, SPAN_WARNING("The window is not in the frame."))
+			if (1)
+				to_chat(user, SPAN_WARNING("The window is pried into the frame but not yet fastened."))
+			if (2)
+				to_chat(user, SPAN_NOTICE("The window is fastened to the frame."))
+
+	if (anchored)
+		to_chat(user, SPAN_NOTICE("It is fastened to \the [get_turf(src)]."))
+	else
+		to_chat(user, SPAN_WARNING("It is not fastened to anything."))
+
 	if (paint_color)
 		to_chat(user, SPAN_NOTICE("The glass is stained with paint."))
+
+	if (polarized)
+		to_chat(user, SPAN_NOTICE("It appears to be wired."))
 
 /obj/structure/window/get_color()
 	if (paint_color)
@@ -371,7 +421,8 @@
 		basestate = reinf_basestate
 	else
 		basestate = initial(basestate)
-	overlays.Cut()
+	
+	..()
 
 	if (paint_color)
 		color = paint_color
@@ -393,20 +444,20 @@
 		for(var/i = 1 to 4)
 			var/conn = connections ? connections[i] : "0"
 			if(other_connections && other_connections[i] != "0")
-				I = image(icon, "[basestate]_other_onframe[conn]", dir = 1<<(i-1))
+				I = image(icon, "[basestate]_other_onframe[conn]", dir = BITFLAG(i-1))
 			else
-				I = image(icon, "[basestate]_onframe[conn]", dir = 1<<(i-1))
+				I = image(icon, "[basestate]_onframe[conn]", dir = BITFLAG(i-1))
 			I.color = paint_color
-			overlays += I
+			add_overlay(I)
 	else
 		for(var/i = 1 to 4)
 			var/conn = connections ? connections[i] : "0"
 			if(other_connections && other_connections[i] != "0")
-				I = image(icon, "[basestate]_other[conn]", dir = 1<<(i-1))
+				I = image(icon, "[basestate]_other[conn]", dir = BITFLAG(i-1))
 			else
-				I = image(icon, "[basestate][conn]", dir = 1<<(i-1))
+				I = image(icon, "[basestate][conn]", dir = BITFLAG(i-1))
 			I.color = paint_color
-			overlays += I
+			add_overlay(I)
 
 /obj/structure/window/fire_act(datum/gas_mixture/air, exposed_temperature, exposed_volume)
 	var/melting_point = material.melting_point
@@ -517,13 +568,13 @@
 
 /obj/machinery/button/windowtint/attackby(obj/item/W, mob/user)
 	if(isMultitool(W))
-		var/t = sanitizeSafe(input(user, "Enter the ID for the button.", name, id_tag), MAX_NAME_LEN)
+		var/t = sanitize_safe(input(user, "Enter the ID for the button.", name, id_tag), MAX_NAME_LEN)
 		if(!CanPhysicallyInteract(user))
 			return TRUE
-		t = sanitizeSafe(t, MAX_NAME_LEN)
+		t = sanitize_safe(t, MAX_NAME_LEN)
 		if (t)
 			id_tag = t
-			to_chat(user, SPAN_NOTICE("The new ID of the button is [id_tag]"))
+			to_chat(user, SPAN_NOTICE("The new ID of the button is '[id_tag]'."))
 		return TRUE
 	return ..()
 
@@ -587,7 +638,7 @@
 				return
 
 		if (ST.use(required_amount))
-			var/obj/structure/window/WD = new(loc, dir_to_set, FALSE, ST.material.type, ST.reinf_material && ST.reinf_material.type)
+			var/obj/structure/window/WD = new(loc, ST.material.type, ST.reinf_material?.type, dir_to_set, FALSE)
 			to_chat(user, SPAN_NOTICE("You place [WD]."))
 			WD.construction_state = 0
 			WD.set_anchored(FALSE)

@@ -34,5 +34,4 @@
 	)
 
 	var/list/area_purity_test_exempt_areas = list()
-
 	var/shuttle_atmos_expectation = 1

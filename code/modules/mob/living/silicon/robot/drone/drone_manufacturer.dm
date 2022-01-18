@@ -1,6 +1,6 @@
 /proc/count_drones()
 	var/drones = 0
-	for(var/mob/living/silicon/robot/drone/D in world)
+	for(var/mob/living/silicon/robot/drone/D in global.silicon_mob_list)
 		if(D.key && D.client)
 			drones++
 	return drones
@@ -103,7 +103,7 @@
 		to_chat(user, "<span class='danger'>That verb is not currently permitted.</span>")
 		return
 
-	if(jobban_isbanned(user,"Robot"))
+	if(jobban_isbanned(user,ASSIGNMENT_ROBOT))
 		to_chat(user, "<span class='danger'>You are banned from playing synthetics and cannot spawn as a drone.</span>")
 		return
 

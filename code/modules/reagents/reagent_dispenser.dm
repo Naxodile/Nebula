@@ -116,6 +116,7 @@
 	initial_capacity = 7500
 	initial_reagent_types = list(/decl/material/liquid/water = 1)
 	atom_flags = ATOM_FLAG_NO_TEMP_CHANGE | ATOM_FLAG_CLIMBABLE
+	movable_flags = MOVABLE_FLAG_WHEELED
 
 /obj/structure/reagent_dispensers/watertank/firefighter
 	name = "firefighting water reserve"
@@ -137,6 +138,7 @@
 	amount_per_transfer_from_this = 10
 	initial_reagent_types = list(/decl/material/liquid/fuel = 1)
 	atom_flags = ATOM_FLAG_CLIMBABLE
+	movable_flags = MOVABLE_FLAG_WHEELED
 
 	var/obj/item/assembly_holder/rig = null
 
@@ -167,10 +169,7 @@
 			if (istype(H.a_left,/obj/item/assembly/igniter) || istype(H.a_right,/obj/item/assembly/igniter))
 				log_and_message_admins("rigged a fuel tank for explosion at [loc.loc.name].")
 			rig = W
-			var/icon/test = getFlatIcon(W)
-			test.Shift(NORTH,1)
-			test.Shift(EAST,6)
-			overlays += test
+			update_icon()
 		return TRUE
 	if(W.isflamesource())
 		if(user.a_intent != I_HURT)
@@ -184,6 +183,15 @@
 			try_detonate_reagents()
 			return TRUE
 	. = ..()
+
+/obj/structure/reagent_dispensers/fueltank/on_update_icon()
+	..()
+	if(rig)
+		var/image/I = new
+		I.appearance = rig
+		I.pixel_x += 6
+		I.pixel_y += 1
+		add_overlay(I)
 
 /obj/structure/reagent_dispensers/fueltank/bullet_act(var/obj/item/projectile/Proj)
 	if(Proj.get_structure_damage())
@@ -225,7 +233,7 @@
 	initial_reagent_types = list(/decl/material/liquid/water = 1)
 	tool_interaction_flags = (TOOL_INTERACTION_ANCHOR | TOOL_INTERACTION_DECONSTRUCT)
 	var/cups = 12
-	var/cup_type = /obj/item/chems/food/drinks/sillycup
+	var/cup_type = /obj/item/chems/drinks/sillycup
 
 /obj/structure/reagent_dispensers/water_cooler/attack_hand(var/mob/user)
 	if(cups > 0)

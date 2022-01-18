@@ -28,8 +28,8 @@
 
 /obj/item/examine(mob/user, distance, infix, suffix)
 	. = ..()
-	if(!user.inquisitive_examine)
-		return .
+	if(!user || user.get_preference_value(/datum/client_preference/inquisitive_examine) == PREF_OFF)
+		return
 	var/datum/extension/tool/tool = get_extension(src, /datum/extension/tool)
 	var/list/tool_strings
 	for(var/tool_type in tool?.tool_values)

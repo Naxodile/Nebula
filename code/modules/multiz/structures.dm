@@ -115,13 +115,6 @@
 	if(!.)
 		climb(user, I)
 
-/turf/hitby(atom/movable/AM)
-	..()
-	if(isobj(AM))
-		var/obj/structure/ladder/L = locate() in contents
-		if(L)
-			L.hitby(AM)
-
 /obj/structure/ladder/hitby(obj/item/I)
 	..()
 	if(!target_down)
@@ -266,7 +259,7 @@
 	return airflow || !density
 
 /obj/structure/ladder/on_update_icon()
-	. = ..()
+	..()
 	if(!anchored)
 		icon_state = "[base_icon]00"
 	else

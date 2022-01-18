@@ -41,6 +41,8 @@
 
 	var/last_radio_sound = -INFINITY
 
+	var/intercom_handling = FALSE
+
 /obj/item/radio/proc/set_frequency(new_frequency)
 	radio_controller.remove_object(src, frequency)
 	frequency = new_frequency
@@ -343,11 +345,11 @@
 
 	// --- AI ---
 	else if (isAI(M))
-		jobname = "AI"
+		jobname = ASSIGNMENT_COMPUTER
 
 	// --- Cyborg ---
 	else if (isrobot(M))
-		jobname = "Robot"
+		jobname = ASSIGNMENT_ROBOT
 
 	// --- Personal AI (pAI) ---
 	else if (istype(M, /mob/living/silicon/pai))
@@ -839,6 +841,7 @@
 /obj/item/radio/exosuit
 	name = "exosuit radio"
 	cell = null
+	intercom_handling = TRUE
 
 /obj/item/radio/exosuit/get_cell()
 	. = ..()

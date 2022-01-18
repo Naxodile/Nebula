@@ -9,6 +9,7 @@
 	siemens_coefficient = 0.9
 	w_class = ITEM_SIZE_NORMAL
 	valid_accessory_slots = list(ACCESSORY_SLOT_ARMBAND, ACCESSORY_SLOT_OVER)
+	var/protects_against_weather = FALSE
 	var/fire_resist = T0C+100
 
 /obj/item/clothing/suit/update_clothing_icon()
@@ -16,11 +17,10 @@
 		var/mob/M = src.loc
 		M.update_inv_wear_suit()
 
-/obj/item/clothing/suit/get_mob_overlay(mob/user_mob, slot, bodypart)
-	var/image/ret = ..()
-	if(ret && item_state)
-		ret.icon_state = item_state
-	return ret
+/obj/item/clothing/suit/adjust_mob_overlay(var/mob/living/user_mob, var/bodytype,  var/image/overlay, var/slot, var/bodypart)
+	if(overlay && item_state)
+		overlay.icon_state = item_state
+	. = ..()
 
 /obj/item/clothing/suit/handle_shield()
 	return FALSE

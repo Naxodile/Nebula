@@ -52,7 +52,7 @@
 	. = ..()
 	
 /mob/observer/eye/blueprints/proc/create_area()
-	var/area_name = sanitizeSafe(input("New area name:","Area Creation", ""), MAX_NAME_LEN)
+	var/area_name = sanitize_safe(input("New area name:","Area Creation", ""), MAX_NAME_LEN)
 	if(!area_name || !length(area_name))
 		return
 	if(length(area_name) > 50)
@@ -89,7 +89,7 @@
 	if(!check_modification_validity())
 		return
 	var/prevname = A.name
-	var/new_area_name = sanitizeSafe(input("Edit area name:","Area Editing", prevname), MAX_NAME_LEN)
+	var/new_area_name = sanitize_safe(input("Edit area name:","Area Editing", prevname), MAX_NAME_LEN)
 	if(!new_area_name || !LAZYLEN(new_area_name) || new_area_name==prevname)
 		return
 	if(length(new_area_name) > 50)
@@ -255,7 +255,7 @@
 
 	M.overlay_fullscreen("blueprints", /obj/screen/fullscreen/blueprints)
 	M.client.screen += area_name_effect
-	M.add_client_color(/datum/client_color/monochrome)
+	M.add_client_color(/datum/client_color/achromatopsia)
 
 /mob/observer/eye/blueprints/remove_visual(var/mob/M)
 	. = ..()
@@ -263,7 +263,7 @@
 
 	M.clear_fullscreen("blueprints", 0)
 	M.client.screen -= area_name_effect
-	M.remove_client_color(/datum/client_color/monochrome)
+	M.remove_client_color(/datum/client_color/achromatopsia)
 
 /mob/observer/eye/blueprints/additional_sight_flags()
 	return SEE_TURFS|BLIND

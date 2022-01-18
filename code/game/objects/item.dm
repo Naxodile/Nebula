@@ -81,11 +81,12 @@
 	var/pickup_sound = 'sound/foley/paperpickup2.ogg'
 	///Sound uses when dropping the item, or when its thrown.
 	var/drop_sound = 'sound/foley/drop1.ogg'
-	
+
 	var/datum/reagents/coating // reagent container for coating things like blood/oil, used for overlays and tracks
 
 	var/tmp/has_inventory_icon	// do not set manually
 	var/tmp/use_single_icon
+	var/center_of_mass = @"{'x':16,'y':16}" //can be null for no exact placement behaviour
 
 // Foley sound callbacks
 /obj/item/proc/equipped_sound_callback()
@@ -127,11 +128,18 @@
 	reconsider_single_icon()
 
 /obj/item/Destroy()
+
 	STOP_PROCESSING(SSobj, src)
 	QDEL_NULL(hidden_uplink)
+
 	if(ismob(loc))
-		var/mob/m = loc
-		m.drop_from_inventory(src)
+		var/mob/M = loc
+		LAZYREMOVE(M.pinned, src)
+		LAZYREMOVE(M.embedded, src)
+		for(var/obj/item/organ/external/organ in M.get_organs())
+			LAZYREMOVE(organ.implants, src)
+		M.drop_from_inventory(src)
+
 	var/obj/item/storage/storage = loc
 	if(istype(storage))
 		// some ui cleanup needs to be done
@@ -178,21 +186,23 @@
 	var/desc_comp = "" //For "description composite"
 	desc_comp += "It is a [w_class_description()] item."
 
-	var/list/available_recipes = list()
-	for(var/decl/crafting_stage/initial_stage in SSfabrication.find_crafting_recipes(type))
-		if(initial_stage.can_begin_with(src) && ispath(initial_stage.completion_trigger_type))
-			var/atom/movable/prop = initial_stage.completion_trigger_type
-			if(initial_stage.stack_consume_amount > 1)
-				available_recipes[initial_stage] = "[initial_stage.stack_consume_amount] [initial(prop.name)]\s"
-			else
-				available_recipes[initial_stage] = "\a [initial(prop.name)]"
+	if(user?.get_preference_value(/datum/client_preference/inquisitive_examine) == PREF_ON)
 
-	if(user.inquisitive_examine && length(available_recipes))
-		desc_comp += "<BR>*--------* <BR>"
-		for(var/decl/crafting_stage/initial_stage in available_recipes)
-			desc_comp += SPAN_NOTICE("With [available_recipes[initial_stage]], you could start making \a [initial_stage.descriptor] out of this.")
-			desc_comp += "<BR>"
-		desc_comp += "*--------*"
+		var/list/available_recipes = list()
+		for(var/decl/crafting_stage/initial_stage in SSfabrication.find_crafting_recipes(type))
+			if(initial_stage.can_begin_with(src) && ispath(initial_stage.completion_trigger_type))
+				var/atom/movable/prop = initial_stage.completion_trigger_type
+				if(initial_stage.stack_consume_amount > 1)
+					available_recipes[initial_stage] = "[initial_stage.stack_consume_amount] [initial(prop.name)]\s"
+				else
+					available_recipes[initial_stage] = "\a [initial(prop.name)]"
+
+		if(length(available_recipes))
+			desc_comp += "<BR>*--------* <BR>"
+			for(var/decl/crafting_stage/initial_stage in available_recipes)
+				desc_comp += SPAN_NOTICE("With [available_recipes[initial_stage]], you could start making \a [initial_stage.descriptor] out of this.")
+				desc_comp += "<BR>"
+			desc_comp += "*--------*"
 
 	if(hasHUD(user, HUD_SCIENCE)) //Mob has a research scanner active.
 		desc_comp += "<BR>*--------* <BR>"
@@ -365,6 +375,8 @@
 
 // apparently called whenever an item is removed from a slot, container, or anything else.
 /obj/item/proc/dropped(mob/user)
+
+	SHOULD_CALL_PARENT(TRUE)
 	if(randpixel)
 		pixel_z = randpixel //an idea borrowed from some of the older pixel_y randomizations. Intended to make items appear to drop at a character
 	update_twohanding()
@@ -372,6 +384,9 @@
 		thing.update_twohanding()
 	if(drop_sound && SSticker.mode)
 		addtimer(CALLBACK(src, .proc/dropped_sound_callback), 0, (TIMER_OVERRIDE | TIMER_UNIQUE))
+
+	if(user && (z_flags & ZMM_MANGLE_PLANES))
+		addtimer(CALLBACK(user, /mob/proc/check_emissive_equipment), 0, TIMER_UNIQUE)
 
 // called just as an item is picked up (loc is not yet changed)
 /obj/item/proc/pickup(mob/user)
@@ -395,9 +410,11 @@
 // for items that can be placed in multiple slots
 // note this isn't called during the initial dressing of a player
 /obj/item/proc/equipped(var/mob/user, var/slot)
+	SHOULD_CALL_PARENT(TRUE)
+
 	hud_layerise()
-	if(user.client)
-		user.client.screen |= src
+	addtimer(CALLBACK(src, .proc/reconsider_client_screen_presence, user.client, slot), 0)
+
 	//Update two-handing status
 	var/mob/M = loc
 	if(istype(M))
@@ -411,6 +428,9 @@
 			var/mob/living/L = user
 			if(slot in L.held_item_slots)
 				addtimer(CALLBACK(src, .proc/pickup_sound_callback), 0, (TIMER_OVERRIDE | TIMER_UNIQUE))
+
+	if(user && (z_flags & ZMM_MANGLE_PLANES))
+		addtimer(CALLBACK(user, /mob/proc/check_emissive_equipment), 0, TIMER_UNIQUE)
 
 //Defines which slots correspond to which slot flags
 var/global/list/slot_flags_enumeration = list(
@@ -637,15 +657,14 @@ var/global/list/slot_flags_enumeration = list(
 		var/obj/item/organ/internal/eyes/eyes = H.get_internal_organ(BP_EYES)
 
 		if(H != user)
-			for(var/mob/O in (viewers(M) - user - M))
-				O.show_message(SPAN_DANGER("[M] has been stabbed in the eye with [src] by [user]."), 1)
-			to_chat(M, SPAN_DANGER("[user] stabs you in the eye with [src]!"))
-			to_chat(user, SPAN_DANGER("You stab [M] in the eye with [src]!"))
+
+			M.visible_message(
+				SPAN_DANGER("\The [M] has been stabbed in the eye with \the [src] by \the [user]!"),
+				self_message = SPAN_DANGER("You stab \the [M] in the eye with \the [src]!"))
 		else
-			user.visible_message( \
-				SPAN_DANGER("[user] has stabbed themself with [src]!"), \
-				SPAN_DANGER("You stab yourself in the eyes with [src]!") \
-			)
+			user.visible_message(
+				SPAN_DANGER("\The [user] has stabbed themself with \the [src]!"),
+				self_message = SPAN_DANGER("You stab yourself in the eyes with \the [src]!"))
 
 		eyes.damage += rand(3,4)
 		if(eyes.damage >= eyes.min_bruised_damage)
@@ -689,9 +708,9 @@ var/global/list/slot_flags_enumeration = list(
 		return
 
 	if(!blood_data && istype(M))
-		blood_data = M.vessel.reagent_data[/decl/material/liquid/blood]		
+		blood_data = REAGENT_DATA(M.vessel, /decl/material/liquid/blood)
 	var/datum/extension/forensic_evidence/forensics = get_or_create_extension(src, /datum/extension/forensic_evidence)
-	forensics.add_data(/datum/forensics/blood_dna, blood_data["blood_DNA"])
+	forensics.add_data(/datum/forensics/blood_dna, LAZYACCESS(blood_data, "blood_DNA"))
 	add_coating(/decl/material/liquid/blood, amount, blood_data)
 	return 1 //we applied blood to the item
 
@@ -856,7 +875,7 @@ modules/mob/living/carbon/human/life.dm if you die, you will be zoomed out.
 		icon = citem.item_icon
 	if(citem.item_state)
 		set_icon_state(citem.item_state)
-	
+
 /obj/item/proc/is_special_cutting_tool(var/high_power)
 	return FALSE
 
@@ -894,7 +913,7 @@ modules/mob/living/carbon/human/life.dm if you die, you will be zoomed out.
 /obj/item/proc/fill_from_pressurized_fluid_source(obj/structure/source, mob/user)
 	if(!istype(source) || !source.is_pressurized_fluid_source())
 		return FALSE
-	var/free_space =  Floor(REAGENTS_FREE_SPACE(reagents))
+	var/free_space =  FLOOR(REAGENTS_FREE_SPACE(reagents))
 	if(free_space <= 0)
 		to_chat(user, SPAN_WARNING("\The [src] is full!"))
 		return TRUE
@@ -947,3 +966,14 @@ modules/mob/living/carbon/human/life.dm if you die, you will be zoomed out.
 // Updates the icons of the mob wearing the clothing item, if any.
 /obj/item/proc/update_clothing_icon()
 	return
+
+/obj/item/proc/reconsider_client_screen_presence(var/client/client, var/slot)
+	if(!ismob(loc) || !client) // Storage handles screen loc updating/setting itself so should be fine
+		screen_loc = null
+	else if(client)
+		client.screen |= src
+		if(!client.mob || !client.mob.hud_used || !slot || (!client.mob.hud_used.inventory_shown && (slot in client.mob.hud_used.hidden_inventory_slots)))
+			screen_loc = null
+
+/obj/item/proc/gives_weather_protection()
+	return FALSE

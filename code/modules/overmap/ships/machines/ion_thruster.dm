@@ -32,6 +32,7 @@
 	desc = "An advanced propulsion device, using energy and minutes amount of gas to generate thrust."
 	icon = 'icons/obj/ship_engine.dmi'
 	icon_state = "nozzle2"
+	density = 1
 	power_channel = ENVIRON
 	idle_power_usage = 100
 	anchored = TRUE
@@ -41,6 +42,17 @@
 	var/thrust_limit = 1
 	var/burn_cost = 750
 	var/generated_thrust = 2.5
+
+/obj/machinery/ion_thruster/attackby(obj/item/I, mob/user)
+	if(isMultitool(I) && !panel_open)
+		var/datum/extension/ship_engine/engine = get_extension(src, /datum/extension/ship_engine)
+		if(engine.sync_to_ship())
+			to_chat(user, SPAN_NOTICE("\The [src] emits a ping as it syncs its controls to a nearby ship."))
+		else
+			to_chat(user, SPAN_WARNING("\The [src] flashes an error!"))
+		return TRUE
+
+	. = ..()
 
 /obj/machinery/ion_thruster/proc/burn(var/partial)
 	if(!use_power || !powered())
@@ -52,6 +64,9 @@
 	cut_overlays()
 	if(!(stat & (NOPOWER | BROKEN)))
 		add_overlay(emissive_overlay(icon, "ion_glow"))
+		z_flags |= ZMM_MANGLE_PLANES
+	else
+		z_flags &= ~ZMM_MANGLE_PLANES
 
 /obj/machinery/ion_thruster/power_change()
 	. = ..()

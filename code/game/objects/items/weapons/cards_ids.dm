@@ -39,7 +39,7 @@
 		if(signed_by)
 			to_chat(user, SPAN_WARNING("\The [src] has already been signed."))
 		else
-			var/signature = sanitizeSafe(input("What do you want to sign the card as?", "Union Card") as text, MAX_NAME_LEN)
+			var/signature = sanitize_safe(input("What do you want to sign the card as?", "Union Card") as text, MAX_NAME_LEN)
 			if(signature && !signed_by && !user.incapacitated() && Adjacent(user))
 				signed_by = signature
 				user.visible_message(SPAN_NOTICE("\The [user] signs \the [src] with a flourish."))
@@ -185,11 +185,10 @@ var/global/const/NO_EMAG_ACT = -50
 	. = ..()
 	update_icon()
 
-/obj/item/card/id/get_mob_overlay(mob/user_mob, slot, bodypart)
-	var/image/ret = ..()
-	if(ret && detail_color)
-		ret.overlays += overlay_image(ret.icon, "[ret.icon_state]-colors", detail_color, RESET_COLOR)
-	return ret
+/obj/item/card/id/adjust_mob_overlay(var/mob/living/user_mob, var/bodytype,  var/image/overlay, var/slot, var/bodypart)
+	if(overlay && detail_color)
+		overlay.overlays += overlay_image(overlay.icon, "[overlay.icon_state]-colors", detail_color, RESET_COLOR)
+	. = ..()
 
 /obj/item/card/id/on_update_icon()
 	cut_overlays()
@@ -220,9 +219,8 @@ var/global/const/NO_EMAG_ACT = -50
 	if(front && side)
 		send_rsc(user, front, "front.png")
 		send_rsc(user, side, "side.png")
-	var/datum/browser/written/popup = new(user, "idcard", name, 600, 250)
+	var/datum/browser/written_physical/popup = new(user, "idcard", name, 600, 250)
 	popup.set_content(dat())
-	popup.set_title_image(usr.browse_rsc_icon(src.icon, src.icon_state))
 	popup.open()
 	return
 
@@ -294,8 +292,8 @@ var/global/const/NO_EMAG_ACT = -50
 	return jointext(dat,null)
 
 /obj/item/card/id/attack_self(mob/user)
-	user.visible_message("\The [user] shows you: [html_icon(src)] [src.name]. The assignment on the card: [src.assignment]",\
-		"You flash your ID card: [html_icon(src)] [src.name]. The assignment on the card: [src.assignment]")
+	user.visible_message("\The [user] shows you: [html_icon(src)] [src.name]. The assignment on the card: '[src.assignment]'.",\
+		"You flash your ID card: [html_icon(src)] [src.name]. The assignment on the card: '[src.assignment]'.")
 
 	src.add_fingerprint(user)
 	return
