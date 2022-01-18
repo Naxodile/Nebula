@@ -98,57 +98,57 @@
 /obj/item/organ/internal/eyes/avian
 	eye_icon = 'mods/species/neoavians/icons/eyes.dmi'
 
-/datum/sprite_accessory/hair/avian
+/decl/sprite_accessory/hair/avian
 	name = "Avian Plumage"
 	icon_state = "avian_default"
 	icon = 'mods/species/neoavians/icons/hair.dmi'
 	species_allowed = list(SPECIES_AVIAN)
 
-/datum/sprite_accessory/hair/avian/spiky
+/decl/sprite_accessory/hair/avian/spiky
 	name = "Avian Spiky"
 	icon_state = "avian_spiky"
 
-/datum/sprite_accessory/hair/avian/gentle
+/decl/sprite_accessory/hair/avian/gentle
 	name = "Avian Gentle"
 	icon_state = "avian_unused"
 
-/datum/sprite_accessory/hair/avian/hedge
+/decl/sprite_accessory/hair/avian/hedge
 	name = "Avian Hedge"
 	icon_state = "avian_hedge"
 
-/datum/sprite_accessory/hair/avian/long
+/decl/sprite_accessory/hair/avian/long
 	name = "Avian Long"
 	icon_state = "avian_long"
 
-/datum/sprite_accessory/hair/avian/burst
+/decl/sprite_accessory/hair/avian/burst
 	name = "Avian Short Burst"
 	icon_state = "avian_burst_short"
 
-/datum/sprite_accessory/hair/avian/mohawk
+/decl/sprite_accessory/hair/avian/mohawk
 	name = "Avian Mohawk"
 	icon_state = "avian_mohawk"
 
-/datum/sprite_accessory/hair/avian/pointy
+/decl/sprite_accessory/hair/avian/pointy
 	name = "Avian Pointy"
 	icon_state = "avian_pointy"
 
-/datum/sprite_accessory/hair/avian/upright
+/decl/sprite_accessory/hair/avian/upright
 	name = "Avian Upright"
 	icon_state = "avian_upright"
 
-/datum/sprite_accessory/hair/avian/mane
+/decl/sprite_accessory/hair/avian/mane
 	name = "Avian Mane"
 	icon_state = "avian_mane"
 
-/datum/sprite_accessory/hair/avian/droopy
+/decl/sprite_accessory/hair/avian/droopy
 	name = "Avian Droopy"
 	icon_state = "avian_droopy"
 
-/datum/sprite_accessory/hair/avian/mushroom
+/decl/sprite_accessory/hair/avian/mushroom
 	name = "Avian Mushroom"
 	icon_state = "avian_mushroom"
 
-/datum/sprite_accessory/marking/avian
+/decl/sprite_accessory/marking/avian
 	name = "Beak (Head)"
 	icon_state = "beak"
 	body_parts = list(BP_HEAD)
@@ -156,44 +156,44 @@
 	species_allowed = list(SPECIES_AVIAN)
 	blend = ICON_MULTIPLY
 
-/datum/sprite_accessory/marking/avian/resomi
+/decl/sprite_accessory/marking/avian/resomi
 	name = "Raptor Ears (Head)"
 	icon_state = "ears"
 	blend = ICON_ADD
 
-/datum/sprite_accessory/marking/avian/tail
+/decl/sprite_accessory/marking/avian/tail
 	name = "Tailfeathers (Groin)"
 	icon_state = "feathered_tail"
 	body_parts = list(BP_GROIN)
 
-/datum/sprite_accessory/marking/avian/tail/resomi
+/decl/sprite_accessory/marking/avian/tail/resomi
 	name = "Raptor Tail (Groin)"
 	icon_state = "raptor_tail"
 
-/datum/sprite_accessory/marking/avian/tail/resomi_feathers
+/decl/sprite_accessory/marking/avian/tail/resomi_feathers
 	name = "Raptor Tailfeathers (Groin)"
 	icon_state = "raptor_tail_feathers"
 
-/datum/sprite_accessory/marking/avian/wing_feathers
+/decl/sprite_accessory/marking/avian/wing_feathers
 	name = "Wing Feathers (Left)"
 	body_parts = list(BP_L_HAND)
 	icon_state = "wing_feathers"
 	blend = ICON_ADD //wake me up
 
-/datum/sprite_accessory/marking/avian/wing_feathers/right
+/decl/sprite_accessory/marking/avian/wing_feathers/right
 	name = "Wing Feathers (Right)"
 	body_parts = list(BP_R_HAND)
 
-/datum/sprite_accessory/marking/avian/foot_feathers
+/decl/sprite_accessory/marking/avian/foot_feathers
 	name = "Foot Feathers (Left)"
 	body_parts = list(BP_L_FOOT)
 	icon_state = "wing_feathers"
 	blend = ICON_ADD
 
-/datum/sprite_accessory/marking/avian/foot_feathers/right
+/decl/sprite_accessory/marking/avian/foot_feathers/right
 	name = "Foot Feathers (Right)"
 	body_parts = list(BP_R_FOOT)
 
-/datum/sprite_accessory/hair/bald/New()
+/decl/sprite_accessory/hair/bald/New()
 	..()
 	LAZYADD(species_allowed, SPECIES_AVIAN)
